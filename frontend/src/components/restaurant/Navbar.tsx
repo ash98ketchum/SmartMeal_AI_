@@ -1,6 +1,6 @@
 // frontend/src/components/restaurant/Navbar.tsx
 import React, { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
@@ -42,19 +42,17 @@ const RestaurantNavbar: React.FC = () => {
         <nav className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <motion.div
-              whileHover={{ rotate: 10, scale: 1.05 }}
-              className="rounded-full bg-green-100 p-2 text-green-600"
-            >
-              <ChefHat size={22} />
-            </motion.div>
-            <motion.span
-              className="bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-xl font-bold text-transparent"
-              animate={{ opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              SmartMeal AI
-            </motion.span>
+            <Link to="/" className="flex items-center space-x-2 select-none">
+                          <motion.div
+                            whileHover={{ rotate: 10 }}
+                            transition={{ type: 'spring', stiffness: 300 }}
+                          >
+                            <ChefHat className="h-8 w-8 text-green-600" />
+                          </motion.div>
+                          <span className="bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-xl font-bold text-transparent">
+                            SmartMeal AI 
+                          </span>
+                        </Link>
           </div>
 
           {/* Desktop */}

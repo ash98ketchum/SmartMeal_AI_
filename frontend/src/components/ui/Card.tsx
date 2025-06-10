@@ -15,6 +15,7 @@ const Card: React.FC<CardProps> = ({
   glow = false,
   hoverEffect = true,
 }) => {
+  // 3D tilt values
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotateX = useTransform(y, [-100, 100], [2, -2]);
@@ -39,14 +40,19 @@ const Card: React.FC<CardProps> = ({
 
   const variants = {
     initial: { scale: 1, transition: { duration: 0.3 } },
-    hover: { scale: 1.02, transition: { duration: 0.3 } },
+    hover:   { scale: 1.04, transition: { duration: 0.3 } },
   };
 
   return (
     <motion.div
       className={`
-        bg-white shadow-md rounded-xl
-        ${glow ? 'ring-2 ring-green-200 ring-opacity-50' : ''}
+        relative
+        bg-white/60 backdrop-blur-sm
+        border border-white/30
+        rounded-2xl
+        shadow-lg hover:shadow-2xl transition-shadow
+        overflow-hidden
+        ${glow ? 'ring-2 ring-green-200 ring-opacity-40' : ''}
         ${className}
       `}
       style={{
@@ -62,7 +68,12 @@ const Card: React.FC<CardProps> = ({
       whileHover={hoverEffect ? 'hover' : undefined}
       variants={variants}
     >
-      {children}
+      {/* Optional: add a subtle gradient stripe at the top */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-yellow-300 to-orange-400" />
+
+      <div className="relative p-6">
+        {children}
+      </div>
     </motion.div>
   );
 };
