@@ -1,4 +1,3 @@
-// src/components/restaurant/dashboard/PredictionCard.tsx
 import React from "react";
 import { motion } from "framer-motion";
 import { Utensils } from "lucide-react";
@@ -6,7 +5,7 @@ import { Utensils } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 
-// Exported type so Dashboard can import
+// Named export of the Prediction interface
 export interface Prediction {
   dishName: string;
   imageUrl: string;

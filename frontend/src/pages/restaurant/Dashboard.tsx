@@ -1,97 +1,44 @@
 // src/pages/restaurant/Dashboard.tsx
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 
-import RestaurantLayout from "@/layouts/RestaurantLayout";
+import React, { useState } from "react";
 import FilterBar from "@/components/restaurant/dashboard/FilterBar";
 import MetricCard from "@/components/restaurant/dashboard/MetricCard";
 import ChartSection from "@/components/restaurant/dashboard/ChartSection";
-import EventsList, { EventItem } from "@/components/restaurant/dashboard/EventsList";
-
-import PredictionCard, { Prediction } from "@/components/restaurant/dashboard/PredictionCard";
-
-import predictedData from "@/predicted.json";
-
-interface PredictedSummary {
-  dishes: string[];
-  q_values: number[];
-  counts: number[];
-  bestAction: { dish: string; value: number };
-  // other fields ignored
-}
+import EventsList from "@/components/restaurant/dashboard/EventsList";
+import PredictionsSection from "@/components/restaurant/dashboard/PredictionSection";
 
 const Dashboard: React.FC = () => {
-  // FilterBar state (if needed)
   const [filters, setFilters] = useState({} as any);
-  // Example events array
-  const [events, setEvents] = useState<EventItem[]>([]);
-
-  // Parsed predictions from JSON
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
-
-  useEffect(() => {
-    // 1) Load upcoming events (if you have API) else leave blank
-    // setEvents([...])
-
-    // 2) Build predictions array from predicted.json
-    const summary = (predictedData as unknown) as PredictedSummary;
-    const { dishes, q_values, counts } = summary;
-
-    const preds: Prediction[] = dishes.map((dish, idx) => {
-      const actual = counts[idx] ?? 0;
-      const predicted = q_values[idx] ?? 0;
-      const saved = Math.max(predicted - actual, 0);
-      const confidence = actual
-        ? Math.max(0, Math.min(100, (predicted / actual) * 100))
-        : 0;
-
-      return {
-        dishName: dish,
-        imageUrl: "/placeholder.png", // swap in real URLs
-        ingredients: [],              // populate if you have real data
-        predictedValue: predicted,
-        actualValue: actual,
-        saved,
-        confidence: Math.round(confidence),
-      };
-    });
-
-    setPredictions(preds);
-  }, []);
 
   return (
-    // <RestaurantLayout>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        {/* Filters */}
-        <FilterBar
-          onFilterChange={(f) => setFilters(f)}
-          className="mb-6"
-        />
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+      {/* Filter Bar */}
+      <FilterBar onFilterChange={(f) => setFilters(f)} className="mb-6" />
 
-        {/* Metrics */}
-        <MetricCard />
+      {/* Top metrics */}
+      <MetricCard />
 
-        {/* Charts & Events */}
-        <ChartSection className="mb-12" />
-        <EventsList events={events} />
+      {/*
+        Use a 3-column grid on md+:
+          - Chart spans 2 columns (2/3 width)
+          - Events spans 1 column (1/3 width)
+        Falls back to single column on smaller screens
+      */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {/* Chart takes up 2/3 of the width */}
+        <div className="md:col-span-2">
+          <ChartSection />
+        </div>
 
-        {/* Predictions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <h2 className="mb-4 text-2xl font-semibold text-green-600">
-            Recent Predictions
-          </h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {predictions.map((p, i) => (
-              <PredictionCard key={p.dishName} prediction={p} index={i} />
-            ))}
-          </div>
-        </motion.div>
+        {/* Events list takes 1/3 of the width */}
+        <div className="">
+          <EventsList />
+        </div>
       </div>
-    // </RestaurantLayout>
+
+      {/* Dish Predictions */}
+      <PredictionsSection />
+    </div>
   );
 };
 

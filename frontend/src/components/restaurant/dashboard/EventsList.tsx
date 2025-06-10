@@ -1,10 +1,13 @@
 // frontend/src/components/restaurant/dashboard/EventsList.tsx
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
+import axios from "axios";
 
 import Card from "@/components/ui/Card";
 
+// Same interface for each event
 export interface EventItem {
   id: string;
   title: string;
@@ -13,24 +16,80 @@ export interface EventItem {
 }
 
 interface EventsListProps {
-  events: EventItem[];
   className?: string;
 }
 
-const EventsList: React.FC<EventsListProps> = ({
-  events,
-  className = "",
-}) => {
+const EventsList: React.FC<EventsListProps> = ({ className = "" }) => {
+  // 1) Local state for events, loading, and error
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
+
+  // 2) Fetch events when component mounts
+  useEffect(() => {
+    axios
+      .get<EventItem[]>("/api/events")
+      .then((res) => {
+        setEvents(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to load events:", err);
+        setError("Could not load events");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  // 3) Helper to render time until/since event
   const renderStatus = (evtDate: string) => {
-    const now = Date.now();
+    const now  = Date.now();
     const diff = new Date(evtDate).getTime() - now;
     if (diff < 0) return "Past";
-    const days = Math.floor(diff / 86400000);
+    const days  = Math.floor(diff / 86400000);
     const hours = Math.floor((diff % 86400000) / 3600000);
     return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
   };
 
-  // No events fallback
+  // 4) Loading state
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={className}
+      >
+        <Card className="p-6" glow>
+          <h2 className="mb-4 text-xl font-semibold text-gray-800">
+            Upcoming Events
+          </h2>
+          <p className="text-gray-500">Loading events…</p>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  // 5) Error state
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={className}
+      >
+        <Card className="p-6" glow>
+          <h2 className="mb-4 text-xl font-semibold text-gray-800">
+            Upcoming Events
+          </h2>
+          <p className="text-red-500">{error}</p>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  // 6) No events fallback
   if (!events.length) {
     return (
       <motion.div
@@ -49,7 +108,7 @@ const EventsList: React.FC<EventsListProps> = ({
     );
   }
 
-  // Events list
+  // 7) Render the list of events
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

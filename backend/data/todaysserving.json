@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Rajma Chawal",
+    "costPerPlate": 12,
+    "totalIngredientsCost": 100,
+    "totalPlates": 20,
+    "platesWasted": 2,
+    "totalEarning": 126
+  },
+  {
+    "name": "Biryani",
+    "costPerPlate": 10,
+    "totalIngredientsCost": 80,
+    "totalPlates": 25,
+    "platesWasted": 1,
+    "totalEarning": 163.2
+  }
+]

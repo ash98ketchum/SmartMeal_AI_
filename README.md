@@ -137,6 +137,8 @@ frontend/
 - Flesh out Restaurant FAQ and Settings pages.  
 - Add error boundaries, loading spinners, and form validation.  
 - Deploy via Vercel/Netlify and configure environment variables.
+- Restaurant Dashboard mei NGO wala section jaha pr NGO ki request and response handler wala section banana h
+- Jese main page ka review h vesa NGO wala banana h 
 
 ---
 

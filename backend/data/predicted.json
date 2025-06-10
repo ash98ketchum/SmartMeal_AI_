@@ -1,0 +1,24 @@
+{
+  "trainedAt": "2025-06-10T18:21:17.930124",
+  "epsilon": 0.2,
+  "dishes": [
+    "Rajma Chawal",
+    "Biryani"
+  ],
+  "q_values": [
+    126.0,
+    163.2
+  ],
+  "counts": [
+    28,
+    172
+  ],
+  "averageRewards": {
+    "Biryani": 163.2,
+    "Rajma Chawal": 126.0
+  },
+  "bestAction": {
+    "dish": "Biryani",
+    "value": 163.2
+  }
+}

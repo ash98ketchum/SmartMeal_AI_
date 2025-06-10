@@ -32,7 +32,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => (
     {/* 🌐 Site chrome + content */}
     <Navbar />
     <main className="flex-1 container mx-auto px-4">{children}</main>
-    {/* <Footer /> */}
+    <Footer />
   </div>
 );
 

@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import Footer from "@/components/common/Footer";
 import {
   ArrowRight,
   Users,
@@ -393,6 +394,7 @@ const Landing: React.FC = () => {
           </div>
         </div>
       </section>
+
     </div>
   );
 };

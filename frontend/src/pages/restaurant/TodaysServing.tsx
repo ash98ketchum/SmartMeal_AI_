@@ -77,43 +77,49 @@ const TodaysServing: React.FC = () => {
   };
 
   const addServing = async () => {
-    const c = parseFloat(form.costPerPlate);
-    const i = parseFloat(form.totalIngredientsCost);
-    const t = parseInt(form.totalPlates, 10);
-    const w = parseInt(form.platesWasted, 10);
+  const c = parseFloat(form.costPerPlate);
+  const i = parseFloat(form.totalIngredientsCost);
+  const t = parseInt(form.totalPlates, 10);
+  const w = parseInt(form.platesWasted, 10);
 
-    if ([c, i, t, w].some(isNaN) || t <= 0) {
-      alert("Please enter valid numbers and ensure total plates > 0.");
-      return;
-    }
+  if ([c,i,t,w].some(isNaN) || t <= 0) {
+    return alert("Please enter valid numbers and ensure total plates > 0.");
+  }
 
-    const newServing: Serving = {
-      name: form.name === "Other" ? form.customName : form.name,
-      costPerPlate: c,
-      totalIngredientsCost: i,
-      totalPlates: t,
-      platesWasted: w,
-      totalEarning: (c - i / t) * (t - w),
-      remark: form.remark || undefined,
-    };
-
-    try {
-      await axios.post("/api/servings", newServing);
-      setForm({
-        name: "",
-        customName: "",
-        costPerPlate: "",
-        totalIngredientsCost: "",
-        totalPlates: "",
-        platesWasted: "",
-        remark: "",
-      });
-      fetchServings();
-    } catch (err) {
-      console.error("Add serving failed:", err);
-      alert("Could not add serving.");
-    }
+  const newServing: Serving = {
+    name: form.name === "Other" ? form.customName : form.name,
+    costPerPlate: c,
+    totalIngredientsCost: i,
+    totalPlates: t,
+    platesWasted: w,
+    totalEarning: +( (c - i/t) * (t - w) ).toFixed(2),
+    remark: form.remark || undefined,
   };
+
+  // 1) Optimistically show it:
+  setServings(prev => [...prev, newServing]);
+
+  // 2) Clear form:
+  setForm({
+    name: "",
+    customName: "",
+    costPerPlate: "",
+    totalIngredientsCost: "",
+    totalPlates: "",
+    platesWasted: "",
+    remark: "",
+  });
+
+  // 3) Persist in background:
+  try {
+    await axios.post("/api/servings", newServing);
+  } catch (err) {
+    console.error("Could not save to server:", err);
+    alert("Saved locally but failed to persist to server.");
+    // you could add retry logic here
+  }
+};
+
 
   const removeServing = async (name: string) => {
     try {
