@@ -139,8 +139,6 @@ frontend/
 - Deploy via Vercel/Netlify and configure environment variables.
 - Restaurant Dashboard mei NGO wala section jaha pr NGO ki request and response handler wala section banana h
 - Jese main page ka review h vesa NGO wala banana h 
+- main dashboard se available food hatake ab tk ngo and restaurant ne kya kiya vo sb ayega 
 
 ---
-
-> Crafted with care by SmartMeal AI Team  
-> “Rescuing Surplus, Nourishing Communities”  
