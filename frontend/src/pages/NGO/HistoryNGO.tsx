@@ -18,6 +18,7 @@ import {
   CheckCircle,
   Activity,
   Clock,
+  File,
   Camera,
   FileText,
   ChevronDown
@@ -209,8 +210,8 @@ const HistoryNGO: React.FC = () => {
           whileTap={{ scale: 0.98 }}
           className="bg-gradient-to-r from-green-500 to-orange-500 text-white px-8 py-4 rounded-2xl hover:shadow-xl transition-all duration-300 flex items-center space-x-3 font-semibold"
         >
-          <Download className="w-5 h-5" />
-          <span>Export Report</span>
+          <File className="w-5 h-5" />
+          <span>Details</span>
         </motion.button>
       </div>
 
@@ -390,7 +391,7 @@ const HistoryNGO: React.FC = () => {
                   </div>
 
                   {/* Impact Metrics */}
-                  {record.beneficiaries > 0 && (
+                  {/* {record.beneficiaries > 0 && (
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="p-3 bg-green-50 rounded-xl">
                         <div className="text-sm text-green-600 mb-1">People Helped</div>
@@ -403,8 +404,8 @@ const HistoryNGO: React.FC = () => {
                           <span>{record.photos}</span>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    </div> */}
+                  {/* )} */}
                   
                   {record.notes && (
                     <div className="p-4 bg-gray-50 rounded-xl group-hover:bg-green-50 transition-colors duration-200">
@@ -443,27 +444,27 @@ const HistoryNGO: React.FC = () => {
                         <div className="text-sm space-y-2">
                           <p><span className="text-gray-600">Pickup ID:</span> <span className="font-medium">#{record.id}</span></p>
                           <p><span className="text-gray-600">Impact Score:</span> <span className="font-medium text-green-600">{record.impactScore}%</span></p>
-                          <p><span className="text-gray-600">Photos taken:</span> <span className="font-medium">{record.photos}</span></p>
+                          {/* <p><span className="text-gray-600">Photos taken:</span> <span className="font-medium">{record.photos}</span></p> */}
                           <p><span className="text-gray-600">Delivery status:</span> <span className="font-medium text-green-600">Confirmed</span></p>
                         </div>
                       </div>
                       <div className="flex flex-col gap-3">
-                        <motion.button
+                        {/* <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           className="px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 text-sm font-medium flex items-center justify-center space-x-2"
                         >
                           <Camera className="w-4 h-4" />
                           <span>View Photos</span>
-                        </motion.button>
-                        <motion.button
+                        </motion.button> */}
+                        {/* <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           className="px-4 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors duration-200 text-sm font-medium flex items-center justify-center space-x-2"
                         >
                           <Download className="w-4 h-4" />
                           <span>Download Report</span>
-                        </motion.button>
+                        </motion.button> */}
                       </div>
                     </div>
                   </motion.div>

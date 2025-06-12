@@ -306,7 +306,7 @@ const Landing: React.FC = () => {
       </section>
 
       {/* ───────────────  Recent activity  ─────────────── */}
-      <section className="bg-gradient-to-r from-green-50 to-orange-50 py-16">
+      {/* <section className="bg-gradient-to-r from-green-50 to-orange-50 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -393,7 +393,7 @@ const Landing: React.FC = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
     </div>
   );

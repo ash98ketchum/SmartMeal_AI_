@@ -224,9 +224,9 @@ const Reviews: React.FC = () => {
               <Filter className="h-5 w-5 text-gray-500" />
               <div className="flex space-x-2">
                 {[
-                  { value: "all", label: "All Reviews" },
+                  // { value: "all", label: "All Reviews" },
                   { value: "ngo", label: "NGO Reviews" },
-                  { value: "restaurant", label: "Restaurant Reviews" },
+                  // { value: "restaurant", label: "Restaurant Reviews" },
                 ].map(({ value, label }) => (
                   <button
                     key={value}

@@ -18,7 +18,8 @@ import {
   Calendar,
   Activity,
   X,
-  Plus
+  Plus,
+  Check
 } from 'lucide-react';
 
 const MyRequests: React.FC = () => {
@@ -278,28 +279,28 @@ const MyRequests: React.FC = () => {
               exit={{ opacity: 0, height: 0 }}
               className="mt-4 p-4 bg-gradient-to-r from-green-50 to-orange-50 rounded-xl border border-green-200"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-green-800">
+              {/* <div className="flex items-center justify-between"> */}
+                {/* <span className="text-sm font-medium text-green-800">
                   {selectedRequests.length} request(s) selected
-                </span>
-                <div className="flex gap-2">
-                  <motion.button 
+                </span> */}
+                {/* <div className="flex gap-2"> */}
+                  {/* <motion.button 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors duration-200"
                   >
                     Approve Selected
-                  </motion.button>
-                  <motion.button 
+                  </motion.button> */}
+                  {/* <motion.button 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-1"
                   >
                     <Download className="w-4 h-4" />
                     <span>Export</span>
-                  </motion.button>
-                </div>
-              </div>
+                  </motion.button> */}
+                {/* </div> */}
+              {/* </div> */}
             </motion.div>
           )}
         </AnimatePresence>
@@ -401,8 +402,8 @@ const MyRequests: React.FC = () => {
                     whileTap={{ scale: 0.98 }}
                     className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2"
                   >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Message</span>
+                    <Check className="w-4 h-4" />
+                    <span>Mark as Completed</span>
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -414,7 +415,7 @@ const MyRequests: React.FC = () => {
                       expandedRow === request.id ? 'rotate-180' : ''
                     }`} />
                   </motion.button>
-                  <motion.button
+                  {/* <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => toggleSelectRequest(request.id)}
@@ -425,7 +426,7 @@ const MyRequests: React.FC = () => {
                     }`}
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                  </motion.button>
+                  </motion.button> */}
                 </div>
 
                 {/* Expanded Details */}
@@ -447,20 +448,20 @@ const MyRequests: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex flex-col gap-2">
-                          <motion.button
+                          {/* <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className="px-4 py-2 bg-gradient-to-r from-green-500 to-orange-500 text-white rounded-xl hover:shadow-lg transition-all duration-200 text-sm font-medium"
                           >
                             Mark as Completed
-                          </motion.button>
-                          <motion.button
+                          </motion.button> */}
+                          {/* <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
                           >
                             Start Chat
-                          </motion.button>
+                          </motion.button> */}
                         </div>
                       </div>
                     </motion.div>

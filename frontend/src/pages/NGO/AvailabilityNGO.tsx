@@ -384,10 +384,10 @@ const AvailabilityNGO: React.FC = () => {
                   >
                     {item.status}
                   </Badge>
-                  <div className="bg-black bg-opacity-70 text-white px-2 py-1 rounded-lg text-xs flex items-center space-x-1">
+                  {/* <div className="bg-black bg-opacity-70 text-white px-2 py-1 rounded-lg text-xs flex items-center space-x-1">
                     <Star className="w-3 h-3 text-yellow-400 fill-current" />
                     <span>{item.rating}</span>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg text-sm flex items-center space-x-2">
                   <Clock className="w-3 h-3" />
@@ -453,13 +453,13 @@ const AvailabilityNGO: React.FC = () => {
                   >
                     <Heart className="w-4 h-4" />
                   </motion.button>
-                  <motion.button
+                  {/* <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors duration-200"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </motion.button>
+                  > */}
+                    {/* <Share2 className="w-4 h-4" /> */}
+                  {/* </motion.button> */}
                 </div>
               </div>
             </Card>
