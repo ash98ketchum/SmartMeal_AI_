@@ -20,9 +20,9 @@ import Settings         from '@/pages/restaurant/Settings';
 import History          from '@/pages/restaurant/History';
 
 import DashboardNGO     from '@/pages/NGO/NGoDashboard';
-import FeaturesNGO      from '@/pages/NGO/FeaturesNGO';
+import MyRequests      from '@/pages/NGO/MyRequests';
 import AvailabilityNGO  from '@/pages/NGO/AvailabilityNGO';
-import PickupTrackerNGO from '@/pages/NGO/PickupTrackerNGO';
+import RestaurantPartners from '@/pages/NGO/RestaurantPartners';
 import HistoryNGO       from '@/pages/NGO/HistoryNGO';
 import FeedbackNGO      from '@/pages/NGO/FeedbackNGO';
 
@@ -52,9 +52,9 @@ const App: React.FC = () => (
       {/* NGO Routes */}
       <Route path="/ngo" element={<NGOLayout />}>
         <Route index                       element={<DashboardNGO     />} />
-        <Route path="features"            element={<FeaturesNGO      />} />
-        <Route path="features/availability" element={<AvailabilityNGO />} />
-        <Route path="features/pickup-tracker" element={<PickupTrackerNGO />} />
+        <Route path="availableFood" element={<AvailabilityNGO />} />
+        <Route path="MyRequests"            element={<MyRequests      />} />
+        <Route path="restaurantPartners" element={<RestaurantPartners />} />
         <Route path="history"             element={<HistoryNGO       />} />
         <Route path="feedback"            element={<FeedbackNGO      />} />
         <Route path="*"                   element={<Navigate to="/ngo" replace />} />

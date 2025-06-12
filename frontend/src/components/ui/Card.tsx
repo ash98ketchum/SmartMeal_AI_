@@ -1,80 +1,59 @@
 // src/components/ui/Card.tsx
-import React, { ReactNode } from 'react';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+
+import React from 'react';
+import { motion } from 'framer-motion';
 
 interface CardProps {
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
   glow?: boolean;
   hoverEffect?: boolean;
+  onClick?: () => void;
 }
 
 const Card: React.FC<CardProps> = ({
   children,
   className = '',
-  glow = false,
+  glow = true,
   hoverEffect = true,
+  onClick,
 }) => {
-  // 3D tilt values
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotateX = useTransform(y, [-100, 100], [2, -2]);
-  const rotateY = useTransform(x, [-100, 100], [-2, 2]);
-  const springConfig = { damping: 20, stiffness: 200 };
-  const springRotateX = useSpring(rotateX, springConfig);
-  const springRotateY = useSpring(rotateY, springConfig);
+  // Base styling for all cards
+  const baseClasses =
+    "bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden";
 
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    if (!hoverEffect) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    x.set(e.clientX - cx);
-    y.set(e.clientY - cy);
-  }
-  function handleMouseLeave() {
-    if (!hoverEffect) return;
-    x.set(0);
-    y.set(0);
-  }
+  // If glow prop is set, apply a ring
+  const glowClasses = glow
+    ? "ring-2 ring-green-200 ring-opacity-40"
+    : "";
 
-  const variants = {
-    initial: { scale: 1, transition: { duration: 0.3 } },
-    hover:   { scale: 1.04, transition: { duration: 0.3 } },
-  };
+  // If hoverEffect is true, apply these hover states
+  const hoverClasses = hoverEffect
+    ? "hover:shadow-xl hover:border-orange-200 cursor-pointer"
+    : "";
 
-  return (
-    <motion.div
-      className={`
-        relative
-        bg-white/60 backdrop-blur-sm
-        border border-white/30
-        rounded-2xl
-        shadow-lg hover:shadow-2xl transition-shadow
-        overflow-hidden
-        ${glow ? 'ring-2 ring-green-200 ring-opacity-40' : ''}
-        ${className}
-      `}
-      style={{
-        x: 0,
-        y: 0,
-        rotateX: hoverEffect ? springRotateX : 0,
-        rotateY: hoverEffect ? springRotateY : 0,
-        perspective: 1000,
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      initial="initial"
-      whileHover={hoverEffect ? 'hover' : undefined}
-      variants={variants}
-    >
-      {/* Optional: add a subtle gradient stripe at the top */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-yellow-300 to-orange-400" />
-
-      <div className="relative p-6">
+  // Wrap in motion.div if hoverEffect to get smooth animation
+  if (hoverEffect) {
+    return (
+      <motion.div
+        className={`${baseClasses} ${glowClasses} ${hoverClasses} ${className}`}
+        whileHover={{ y: -4, scale: 1.02 }}
+        transition={{ duration: 0.2 }}
+        onClick={onClick}
+      >
         {children}
-      </div>
-    </motion.div>
+      </motion.div>
+    );
+  }
+
+  // Otherwise, a plain div
+  return (
+    <div
+      className={`${baseClasses} ${glowClasses} ${className}`}
+      onClick={onClick}
+    >
+      {children}
+    </div>
   );
 };
 
