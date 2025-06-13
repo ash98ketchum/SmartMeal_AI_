@@ -1,11 +1,11 @@
+// src/pages/signin/SigninRestaurant.tsx
+
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from 'axios';
 import { ChefHat } from "lucide-react";
 import { motion } from "framer-motion";
 import FloatingFoodIcons from "@/components/common/FloatingFoodIcons";
-
-const MASTER_EMAIL = "owner@smartmeal.ai";
-const MASTER_PASSWORD = "P@ssw0rd123";
 
 const SigninRestaurant: React.FC = () => {
   const navigate = useNavigate();
@@ -13,22 +13,24 @@ const SigninRestaurant: React.FC = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === MASTER_EMAIL && password === MASTER_PASSWORD) {
-      setError(null);
-      navigate("/restaurant");
-    } else {
-      setError("Invalid credentials. Please try again.");
+    try {
+      const response = await axios.post(
+        'http://localhost:4000/api/v1/auth/login',
+        { email, password }
+      );
+      localStorage.setItem('token', response.data.token);
+      navigate('/restaurant');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Login failed');
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-green-100 via-yellow-100 to-orange-50">
-      {/* Subtle floating icons in the background */}
       <FloatingFoodIcons />
 
-      {/* Animated card container */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -89,11 +91,18 @@ const SigninRestaurant: React.FC = () => {
           </motion.button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/signup/restaurant" className="text-green-600 hover:underline">
+            Sign up here
+          </Link>
+        </div>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
           Not a restaurant?{' '}
-          <a href="/signin/ngo" className="text-green-600 hover:underline">
+          <Link to="/signin/ngo" className="text-green-600 hover:underline">
             Sign in as NGO
-          </a>
+          </Link>
         </p>
       </motion.div>
     </div>

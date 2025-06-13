@@ -141,4 +141,12 @@ frontend/
 - Jese main page ka review h vesa NGO wala banana h 
 - main dashboard se available food hatake ab tk ngo and restaurant ne kya kiya vo sb ayega 
 
+
+Database :
+check number of users 
+node -e "const { PrismaClient } = require('@prisma/client'); const db=new PrismaClient(); db.user.count().then(c => console.log('Users:',c))"
+
+JWT_SECRET='4f8d2a3e9b7c1d5f6a4e3c2b1f9d8a7c4e6f2b9a8d7c1e3f6b4a5c2d7e9f8a3d'
+
+
 ---
