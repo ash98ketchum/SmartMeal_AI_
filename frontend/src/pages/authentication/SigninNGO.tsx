@@ -25,7 +25,7 @@ const SignInNGO: React.FC = () => {
       });
 
       localStorage.setItem('token', response.data.token);
-      navigate('/dashboard');
+      navigate('/ngo');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');
     }

@@ -12,12 +12,14 @@ model User {
   email        String   @unique
   passwordHash String
   role         Role
-  ngoName      String?   // ✅ Add this line for NGO
-  gstNumber    String?   // for restaurants
+  ngoName      String?   // for NGOs
+  gstNumber    String?   // ✅ for restaurants
+  restaurantName String? // ✅ Add this line for restaurants
   aadharNumber String?   // for NGOs
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
+
 
 
 enum Role {
