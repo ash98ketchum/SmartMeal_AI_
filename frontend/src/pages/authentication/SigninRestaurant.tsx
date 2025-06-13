@@ -38,7 +38,7 @@ const SigninRestaurant: React.FC = () => {
         className="z-10 w-full max-w-md p-10 bg-white rounded-3xl shadow-2xl border border-green-50"
       >
         <div className="flex items-center justify-center mb-6 space-x-3">
-          <ChefHat className="h-10 w-10 text-green-600" />
+          <ChefHat className="h-10 w-10 text-orange-600" />
           <h1 className="text-3xl font-extrabold text-gray-800">SmartMeal AI</h1>
         </div>
 
@@ -85,7 +85,7 @@ const SigninRestaurant: React.FC = () => {
             type="submit"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full py-3 rounded-xl bg-green-600 text-white font-semibold tracking-wide uppercase shadow-md hover:bg-green-700 transition"
+            className="w-full py-3 rounded-xl text-orange-600 text-white font-semibold tracking-wide uppercase shadow-md hover: bg-orange-600 transition"
           >
             Sign In
           </motion.button>
@@ -93,14 +93,14 @@ const SigninRestaurant: React.FC = () => {
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Don't have an account?{' '}
-          <Link to="/signup/restaurant" className="text-green-600 hover:underline">
+          <Link to="/signup/restaurant" className="text-orange-600 hover:underline">
             Sign up here
           </Link>
         </div>
 
         <p className="mt-4 text-center text-sm text-gray-600">
           Not a restaurant?{' '}
-          <Link to="/signin/ngo" className="text-green-600 hover:underline">
+          <Link to="/signin/ngo" className="text-orange-600 hover:underline">
             Sign in as NGO
           </Link>
         </p>

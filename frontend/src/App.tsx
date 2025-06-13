@@ -12,6 +12,8 @@ import FAQ              from '@/pages/public/FAQ';
 
 import SigninNGO        from '@/pages/authentication/SigninNGO';
 import SigninRestaurant from '@/pages/authentication/SigninRestaurant';
+import SignUpNGO        from '@/pages/authentication/SignUpNGO';
+import SignUpRestaurant from './pages/authentication/SignUpRestaurant';
 
 import Dashboard        from '@/pages/restaurant/Dashboard';
 import TodaysServing    from '@/pages/restaurant/TodaysServing';
@@ -38,6 +40,8 @@ const App: React.FC = () => (
       {/* Authentication */}
       <Route path="/signin/ngo"        element={<SigninNGO       />} />
       <Route path="/signin/restaurant" element={<SigninRestaurant/>} />
+      <Route path="/signup/ngo" element={<SignUpNGO />} />
+      <Route path="/signup/restaurant" element={<SignUpRestaurant />} />
 
       {/* Restaurant Routes */}
       <Route path="/restaurant" element={<RestaurantLayout />}>
