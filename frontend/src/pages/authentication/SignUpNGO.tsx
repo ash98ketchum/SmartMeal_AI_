@@ -37,7 +37,7 @@ const SignUpNGO: React.FC = () => {
       });
 
       localStorage.setItem('token', response.data.token);
-      navigate('/ngo');
+      navigate('/signin/ngo');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Sign up failed');
     }

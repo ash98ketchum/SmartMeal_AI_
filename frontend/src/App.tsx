@@ -1,5 +1,15 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
+
+// Axios interceptor: attach token to all requests
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 import MainLayout       from '@/layouts/MainLayout';
 import RestaurantLayout from '@/layouts/RestaurantLayout';
@@ -21,13 +31,14 @@ import EventsPage       from '@/pages/restaurant/Events';
 import Settings         from '@/pages/restaurant/Settings';
 import History          from '@/pages/restaurant/History';
 
-// import NGoDashboard     from '@/pages/NGO/NGoDashboard';
-import MyRequests      from '@/pages/NGO/MyRequests';
+import MyRequests       from '@/pages/NGO/MyRequests';
 import AvailabilityNGO  from '@/pages/NGO/AvailabilityNGO';
 import RestaurantPartners from '@/pages/NGO/RestaurantPartners';
 import HistoryNGO       from '@/pages/NGO/HistoryNGO';
 import FeedbackNGO      from '@/pages/NGO/FeedbackNGO';
-import NgoDashboard from '@/pages/NGO/NGoDashboard';
+import NgoDashboard     from '@/pages/NGO/NGoDashboard';
+
+import PrivateRoute     from '@/components/auth/PrivateRoute';
 
 const App: React.FC = () => (
   <Router>
@@ -41,11 +52,15 @@ const App: React.FC = () => (
       {/* Authentication */}
       <Route path="/signin/ngo"        element={<SigninNGO       />} />
       <Route path="/signin/restaurant" element={<SigninRestaurant/>} />
-      <Route path="/signup/ngo" element={<SignUpNGO />} />
+      <Route path="/signup/ngo"        element={<SignUpNGO />} />
       <Route path="/signup/restaurant" element={<SignUpRestaurant />} />
 
       {/* Restaurant Routes */}
-      <Route path="/restaurant" element={<RestaurantLayout />}>
+      <Route path="/restaurant" element={
+        <PrivateRoute>
+          <RestaurantLayout />
+        </PrivateRoute>
+      }>
         <Route index            element={<Dashboard     />} />
         <Route path="serving"   element={<TodaysServing />} />
         <Route path="events"    element={<EventsPage    />} />
@@ -55,14 +70,18 @@ const App: React.FC = () => (
       </Route>
 
       {/* NGO Routes */}
-      <Route path="/ngo" element={<NGOLayout />}>
-        <Route index                       element={<NgoDashboard     />} />
+      <Route path="/ngo" element={
+        <PrivateRoute>
+          <NGOLayout />
+        </PrivateRoute>
+      }>
+        <Route index                 element={<NgoDashboard     />} />
         <Route path="availableFood" element={<AvailabilityNGO />} />
-        <Route path="MyRequests"            element={<MyRequests      />} />
+        <Route path="MyRequests"    element={<MyRequests      />} />
         <Route path="restaurantPartners" element={<RestaurantPartners />} />
-        <Route path="history"             element={<HistoryNGO       />} />
-        <Route path="feedback"            element={<FeedbackNGO      />} />
-        <Route path="*"                   element={<Navigate to="/ngo" replace />} />
+        <Route path="history"       element={<HistoryNGO       />} />
+        <Route path="feedback"      element={<FeedbackNGO      />} />
+        <Route path="*"             element={<Navigate to="/ngo" replace />} />
       </Route>
     </Routes>
   </Router>

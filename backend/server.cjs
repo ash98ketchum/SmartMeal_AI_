@@ -122,21 +122,29 @@ function requireAuth(req, res, next) {
 
 // --- CRUD for Today's Servings ---
 app.get('/api/servings', requireAuth, (_, res) => {
-  res.json(readJson(p('today')));
+  const all = readJson(p('today'));
+  const today = new Date().toISOString().split("T")[0];
+
+  // Keep only today's entries
+  const filtered = all.filter(s => s.date === today);
+
+  // Auto-update file to clean outdated
+  syncJson('today', filtered);
+  res.json(filtered);
 });
 
 app.post('/api/servings', requireAuth, (req, res) => {
   const arr = readJson(p('today'));
-  arr.push(req.body);
+  const today = new Date().toISOString().split("T")[0];
+
+  // Attach today's date to every new entry
+  const newItem = { ...req.body, date: today };
+  arr.push(newItem);
+
   syncJson('today', arr);
   res.json({ message: 'Added' });
 });
 
-app.delete('/api/servings/:name', requireAuth, (req, res) => {
-  const filtered = readJson(p('today')).filter(s => s.name !== req.params.name);
-  syncJson('today', filtered);
-  res.json({ message: 'Deleted' });
-});
 
 // --- Archive & Reset ---
 function upsertModelData(dateStamp, items) {
@@ -183,18 +191,31 @@ app.get('/api/metrics/monthly', requireAuth, (_, res) => res.json(readSummary('m
 app.get('/api/model/summary',  requireAuth, (_, res) => res.json(readSummary('predicted')));
 
 // --- Events CRUD ---
-app.get('/api/events', requireAuth, (_, res) => res.json(readJson(p('events'))));
+app.get('/api/events', requireAuth, (_, res) => {
+  const all = readJson(p('events'));
+  const today = new Date().toISOString().split("T")[0];
+
+  // Keep only today's or future events
+  const filtered = all.filter(e => e.date >= today);
+
+  // Auto-update file to remove old events
+  syncJson('events', filtered);
+  res.json(filtered);
+});
+
 app.post('/api/events', requireAuth, (req, res) => {
   const evts = readJson(p('events'));
   evts.push(req.body);
   syncJson('events', evts);
   res.json({ message: 'Event added' });
 });
+
 app.delete('/api/events/:id', requireAuth, (req, res) => {
   const filtered = readJson(p('events')).filter(e => e.id !== req.params.id);
   syncJson('events', filtered);
   res.json({ message: 'Event deleted' });
 });
+
 
 // --- Recalibrate Model Endpoint ---
 app.post('/api/recalibrate', requireAuth, (_, res) => {
