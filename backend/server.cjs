@@ -242,6 +242,21 @@ cron.schedule('0 0 * * *', () => {
     if (err) console.error('Cron retrain failed:', err);
   });
 });
+app.post('/reserve-food', (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ error: 'Missing food item ID' });
+
+  const foodPath = path.join(__dirname, 'foodItems.json');
+  const allItems = readJson(foodPath);
+  const idx = allItems.findIndex(item => item.id === id);
+
+  if (idx === -1) return res.status(404).json({ error: 'Item not found' });
+
+  allItems[idx].status = 'reserved';
+  writeJson(foodPath, allItems);
+  res.json({ success: true, message: 'Item reserved successfully' });
+});
+
 
 // --- Serve Frontend ---
 app.use(express.static(path.join(__dirname, '../frontend/dist')));

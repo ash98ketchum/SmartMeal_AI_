@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Camera, Plus, X, Clock, MapPin, DollarSign } from 'lucide-react';
+import { Upload, Camera } from 'lucide-react';
 
 interface FoodUploadForm {
   name: string;
@@ -48,12 +48,32 @@ export default function RestaurantUpload() {
     }));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // In a real app, you'd upload to a server and get a URL
-      const mockImageUrl = 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=600';
-      setForm(prev => ({ ...prev, image: mockImageUrl }));
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'Images for food availability');
+    formData.append('folder', 'SMARTMEAL_AI_/frontend/uploads');
+
+    try {
+      const res = await fetch('https://api.cloudinary.com/v1_1/ds3rewioj/image/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      console.log('Cloudinary response:', data);
+      if (data.secure_url) {
+        setForm(prev => ({ ...prev, image: data.secure_url }));
+        console.log('Image URL saved:', data.secure_url);
+      } else {
+        alert('Image upload failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Image upload failed.');
     }
   };
 
@@ -61,61 +81,62 @@ export default function RestaurantUpload() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const response = await fetch('http://localhost:4000/upload-food', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
 
-    const newItem = {
-      id: Date.now().toString(),
-      ...form,
-      restaurant: 'Your Restaurant',
-      status: 'available',
-      uploadedAt: new Date()
-    };
+      if (!response.ok) throw new Error('Upload failed');
 
-    setUploadedItems(prev => [newItem, ...prev]);
-    
-    // Reset form
-    setForm({
-      name: '',
-      description: '',
-      quantity: '',
-      pickupStartTime: '',
-      pickupEndTime: '',
-      estimatedValue: '',
-      dietaryTags: [],
-      image: '',
-      expiryTime: ''
-    });
+      const newItem = {
+        ...form,
+        id: Date.now().toString(),
+        restaurant: 'Your Restaurant'
+      };
+      setUploadedItems(prev => [newItem, ...prev]);
+
+      setForm({
+        name: '', description: '', quantity: '',
+        pickupStartTime: '', pickupEndTime: '',
+        estimatedValue: '', dietaryTags: [], image: '', expiryTime: ''
+      });
+      alert('Food item uploaded successfully!');
+    } catch (err) {
+      alert('Error uploading item.');
+    }
 
     setIsSubmitting(false);
-    alert('Food item uploaded successfully and is now available for NGOs to request!');
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header */}
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Upload Available Food</h1>
         <p className="text-gray-600">Share your surplus food with partner NGOs and reduce waste</p>
       </div>
 
-      {/* Upload Form */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Food Image</label>
             <div className="flex items-center justify-center w-full">
               <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                 {form.image ? (
-                  <img src={form.image} alt="Preview" className="w-full h-full object-cover rounded-lg" />
+                  <img
+                    src={form.image}
+                    alt="Preview"
+                    className="w-full h-full object-cover rounded-lg"
+                    onError={() => console.error('Image failed to load:', form.image)}
+                  />
                 ) : (
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Camera className="w-10 h-10 mb-3 text-gray-400" />
                     <p className="mb-2 text-sm text-gray-500">
                       <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 10MB)</p>
+                    <p className="text-xs text-gray-500">PNG, JPG, JPEG or WEBP</p>
                   </div>
                 )}
                 <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
@@ -123,7 +144,6 @@ export default function RestaurantUpload() {
             </div>
           </div>
 
-          {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Food Name *</label>
@@ -160,7 +180,6 @@ export default function RestaurantUpload() {
             />
           </div>
 
-          {/* Timing */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Start Time *</label>
@@ -194,7 +213,6 @@ export default function RestaurantUpload() {
             </div>
           </div>
 
-          {/* Dietary Tags */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Dietary Tags</label>
             <div className="flex flex-wrap gap-2">
@@ -215,7 +233,6 @@ export default function RestaurantUpload() {
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -235,43 +252,6 @@ export default function RestaurantUpload() {
           </button>
         </form>
       </div>
-
-      {/* Recently Uploaded Items */}
-      {uploadedItems.length > 0 && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Recently Uploaded Items</h2>
-          <div className="space-y-4">
-            {uploadedItems.map((item) => (
-              <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                <img
-                  src={item.image || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=600'}
-                  alt={item.name}
-                  className="w-16 h-16 object-cover rounded-lg"
-                />
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{item.name}</h3>
-                  <p className="text-sm text-gray-600">{item.quantity}</p>
-                  <p className="text-sm text-gray-500">{item.pickupStartTime} - {item.pickupEndTime}</p>
-                  <div className="flex items-center space-x-2 mt-1">
-                    {item.dietaryTags.map((tag: string, index: number) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-green-600 font-medium">${item.estimatedValue}</div>
-                  <div className="text-sm text-green-600">Available</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
