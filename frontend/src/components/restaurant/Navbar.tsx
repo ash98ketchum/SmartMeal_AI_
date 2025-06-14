@@ -11,12 +11,16 @@ import {
   PlusCircle,
   Clock,
   Calendar,
+  File,
+  Upload,
 } from "lucide-react";
 
 const NAV_LINKS = [
   { to: "/restaurant",           label: "Dashboard", Icon: Home },
   { to: "/restaurant/serving",   label: "Serving",   Icon: PlusCircle },
   { to: "/restaurant/events",    label: "Events",    Icon: Calendar },
+   { to: "/restaurant/form",    label: "Upload Food",    Icon: Upload },
+    { to: "/restaurant/request",    label: "NGO Request",    Icon: File },
   { to: "/restaurant/settings",  label: "Settings",  Icon: Settings },
   { to: "/restaurant/history",   label: "History",   Icon: Clock },   
 ] as const;

@@ -28,6 +28,8 @@ import SignUpRestaurant from './pages/authentication/SignUpRestaurant';
 import Dashboard        from '@/pages/restaurant/Dashboard';
 import TodaysServing    from '@/pages/restaurant/TodaysServing';
 import EventsPage       from '@/pages/restaurant/Events';
+import FoodRequest       from '@/pages/restaurant/FoodRequest';
+import FoodUploadForm       from '@/pages/restaurant/FoodUploadForm';
 import Settings         from '@/pages/restaurant/Settings';
 import History          from '@/pages/restaurant/History';
 
@@ -64,6 +66,8 @@ const App: React.FC = () => (
         <Route index            element={<Dashboard     />} />
         <Route path="serving"   element={<TodaysServing />} />
         <Route path="events"    element={<EventsPage    />} />
+        <Route path="form"    element={<FoodUploadForm    />} />
+        <Route path="request"    element={<FoodRequest    />} />
         <Route path="settings"  element={<Settings      />} />
         <Route path="history"   element={<History       />} />
         <Route path="*"         element={<Navigate to="/restaurant" replace />} />
