@@ -183,6 +183,38 @@ app.post('/api/archive', requireAuth, (_, res) => {
   res.json({ message: 'Archived (today retained)' });
 });
 
+app.post('/api/feedback', (req, res) => {
+  try {
+    const feedbackPath = path.join(DATA_DIR, 'feedback.json');
+    const newFeedback = {
+      ...req.body,
+      id: Date.now().toString(),
+      submittedAt: new Date().toISOString(),
+    };
+
+    // Read existing feedback or initialize empty array
+    const existing = fs.existsSync(feedbackPath)
+      ? JSON.parse(fs.readFileSync(feedbackPath, 'utf8'))
+      : [];
+
+    existing.push(newFeedback);
+
+    fs.writeFileSync(feedbackPath, JSON.stringify(existing, null, 2), 'utf8');
+    res.json({ message: 'Feedback submitted successfully' });
+  } catch (err) {
+    console.error('Failed to save feedback:', err);
+    res.status(500).json({ error: 'Unable to save feedback' });
+  }
+});
+
+app.get('/api/feedback', (req, res) => {
+  const feedbackPath = path.join(DATA_DIR, 'feedback.json');
+  const feedbacks = fs.existsSync(feedbackPath)
+    ? JSON.parse(fs.readFileSync(feedbackPath, 'utf8'))
+    : [];
+  res.json(feedbacks);
+});
+
 app.get('/api/dataformodel/:period', requireAuth, (req, res) => {
   const p = req.params.period;
   if (!['weekly', 'monthly'].includes(p)) return res.status(400).json({ error: 'Invalid period' });

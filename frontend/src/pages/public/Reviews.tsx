@@ -1,5 +1,4 @@
-// frontend/src/pages/public/Reviews.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Star,
@@ -22,101 +21,12 @@ interface Review {
   targetType: "ngo" | "restaurant";
   rating: number;
   comment: string;
-  date: string; // ISO
+  date: string;
   foodItem?: string;
   helpful: number;
   verified: boolean;
 }
 
-/* ------------------------------------------------------------------ */
-/*                      Stubbed data (replace later)                   */
-/* ------------------------------------------------------------------ */
-const demoReviews: Review[] = [
-  {
-    id: "1",
-    reviewerName: "Hope Kitchen NGO",
-    reviewerType: "ngo",
-    targetName: "Green Garden Cafe",
-    targetType: "restaurant",
-    rating: 5,
-    comment:
-      "Excellent food quality and perfectly packaged. The salads were fresh and the portions generous.",
-    date: "2024-01-15",
-    foodItem: "Fresh Garden Salads",
-    helpful: 12,
-    verified: true,
-  },
-  {
-    id: "2",
-    reviewerName: "Urban Kitchen",
-    reviewerType: "restaurant",
-    targetName: "Community Care Center",
-    targetType: "ngo",
-    rating: 4,
-    comment:
-      "Very professional and punctual pickup. Communication was clear throughout.",
-    date: "2024-01-14",
-    foodItem: "Grilled Chicken Meals",
-    helpful: 8,
-    verified: true,
-  },
-  {
-    id: "3",
-    reviewerName: "Neighborhood Aid Society",
-    reviewerType: "ngo",
-    targetName: "Bella Vista",
-    targetType: "restaurant",
-    rating: 5,
-    comment:
-      "Outstanding collaboration! The pasta was delicious and community members were thrilled.",
-    date: "2024-01-13",
-    foodItem: "Pasta Primavera",
-    helpful: 15,
-    verified: true,
-  },
-  {
-    id: "4",
-    reviewerName: "Wok This Way",
-    reviewerType: "restaurant",
-    targetName: "Helping Hands Foundation",
-    targetType: "ngo",
-    rating: 5,
-    comment:
-      "Fantastic NGO to work with! They are always respectful, organised, and grateful.",
-    date: "2024-01-12",
-    foodItem: "Asian Stir Fry",
-    helpful: 10,
-    verified: true,
-  },
-  {
-    id: "5",
-    reviewerName: "Food For All Initiative",
-    reviewerType: "ngo",
-    targetName: "Corner Deli",
-    targetType: "restaurant",
-    rating: 4,
-    comment:
-      "Good experience overall. Pickup was smooth though we waited a few extra minutes.",
-    date: "2024-01-11",
-    foodItem: "Soup & Sandwich Combo",
-    helpful: 6,
-    verified: true,
-  },
-  {
-    id: "6",
-    reviewerName: "Healthy Bites",
-    reviewerType: "restaurant",
-    targetName: "Youth Outreach Program",
-    targetType: "ngo",
-    rating: 5,
-    comment:
-      "Amazing organisation doing incredible work! Volunteers were friendly and professional.",
-    date: "2024-01-10",
-    foodItem: "Fresh Fruit Platters",
-    helpful: 18,
-    verified: true,
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*                                Page                                */
@@ -124,17 +34,36 @@ const demoReviews: Review[] = [
 const Reviews: React.FC = () => {
   const [filter, setFilter] = useState<"all" | "ngo" | "restaurant">("all");
   const [rating, setRating] = useState<number | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const visible = demoReviews.filter(
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch("/api/reviews");
+        const data = await res.json();
+        setReviews(data);
+      } catch (error) {
+        console.error("Failed to load reviews:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  const visible = reviews.filter(
     (r) =>
       (filter === "all" || r.reviewerType === filter) &&
       (rating === null || r.rating === rating)
   );
 
   const avg =
-    demoReviews.reduce((sum, r) => sum + r.rating, 0) / demoReviews.length;
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
 
-  /* ───────  Helpers  ─────── */
   const renderStars = (
     count: number,
     interactive = false,
@@ -160,11 +89,18 @@ const Reviews: React.FC = () => {
     </div>
   );
 
-  /* ──────────────────────────────────────────────────────────────── */
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Loading reviews...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pb-16 pt-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* ───────  Header  ─────── */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -179,7 +115,7 @@ const Reviews: React.FC = () => {
           </p>
         </motion.div>
 
-        {/* ───────  Stats  ─────── */}
+        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -189,7 +125,7 @@ const Reviews: React.FC = () => {
           <div className="grid gap-8 md:grid-cols-3">
             <div className="text-center">
               <div className="mb-2 text-3xl font-bold text-gray-900">
-                {demoReviews.length}
+                {reviews.length}
               </div>
               <div className="text-gray-600">Total Reviews</div>
             </div>
@@ -204,14 +140,14 @@ const Reviews: React.FC = () => {
             </div>
             <div className="text-center">
               <div className="mb-2 text-3xl font-bold text-gray-900">
-                {demoReviews.filter((r) => r.verified).length}
+                {reviews.filter((r) => r.verified).length}
               </div>
               <div className="text-gray-600">Verified Reviews</div>
             </div>
           </div>
         </motion.div>
 
-        {/* ───────  Filters  ─────── */}
+        {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -219,14 +155,14 @@ const Reviews: React.FC = () => {
           className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
         >
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-            {/* Type */}
+            {/* Reviewer Type */}
             <div className="flex items-center space-x-4">
               <Filter className="h-5 w-5 text-gray-500" />
               <div className="flex space-x-2">
                 {[
-                  // { value: "all", label: "All Reviews" },
+                  { value: "all", label: "All Reviews" },
                   { value: "ngo", label: "NGO Reviews" },
-                  // { value: "restaurant", label: "Restaurant Reviews" },
+                  { value: "restaurant", label: "Restaurant Reviews" },
                 ].map(({ value, label }) => (
                   <button
                     key={value}
@@ -278,7 +214,7 @@ const Reviews: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* ───────  Review list  ─────── */}
+        {/* Review List */}
         <AnimatePresence>
           <div className="space-y-6">
             {visible.map((r, i) => (
@@ -291,7 +227,6 @@ const Reviews: React.FC = () => {
                 className="rounded-xl border border-gray-100 bg-white p-6 shadow-lg transition-shadow duration-300 hover:shadow-xl"
               >
                 <div className="flex items-start space-x-4">
-                  {/* Avatar */}
                   <div
                     className={`flex h-12 w-12 items-center justify-center rounded-full ${
                       r.reviewerType === "ngo"
@@ -307,7 +242,6 @@ const Reviews: React.FC = () => {
                   </div>
 
                   <div className="flex-1">
-                    {/* Header */}
                     <div className="mb-3 flex items-start justify-between">
                       <div>
                         <div className="mb-1 flex items-center space-x-2">
@@ -324,10 +258,7 @@ const Reviews: React.FC = () => {
                           Review for{" "}
                           <span className="font-medium">{r.targetName}</span>
                           {r.foodItem && (
-                            <span className="text-gray-500">
-                              {" "}
-                              • {r.foodItem}
-                            </span>
+                            <span className="text-gray-500"> • {r.foodItem}</span>
                           )}
                         </div>
                       </div>
@@ -341,12 +272,10 @@ const Reviews: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Comment */}
                     <p className="mb-4 leading-relaxed text-gray-700">
                       {r.comment}
                     </p>
 
-                    {/* Footer */}
                     <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                       <div className="flex items-center space-x-4">
                         <motion.button
@@ -381,7 +310,7 @@ const Reviews: React.FC = () => {
           </div>
         </AnimatePresence>
 
-        {/* ───────  Empty state  ─────── */}
+        {/* Empty state */}
         {visible.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -411,7 +340,7 @@ const Reviews: React.FC = () => {
           </motion.div>
         )}
 
-        {/* ───────  CTA  ─────── */}
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

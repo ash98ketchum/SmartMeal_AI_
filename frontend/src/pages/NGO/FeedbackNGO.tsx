@@ -1,135 +1,219 @@
-// src/pages/ngo/FeedbackNGO.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Star } from 'lucide-react';
-import FloatingFoodIcons from '@/components/common/FloatingFoodIcons';
+import { Star, CheckCircle, MessageSquare } from 'lucide-react';
 import Card from '@/components/ui/Card';
-// import Confetti from 'react-confetti';
+import Button from '@/components/ui/Button';
 
-const MAX_COMMENT = 200;
+interface FeedbackFormData {
+  organizationName: string;
+  reviewFor: string;
+  menuItem: string;
+  rating: number;
+  content: string;
+  email: string;
+}
 
-const FeedbackNGO: React.FC = () => {
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
+const FeedbackNGO = () => {
+  const [formData, setFormData] = useState<FeedbackFormData>({
+    organizationName: '',
+    reviewFor: '',
+    menuItem: '',
+    rating: 0,
+    content: '',
+    email: '',
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [helper, setHelper] = useState('Tap a star to rate');
 
-  // helper text based on rating
-  useEffect(() => {
-    const texts = [
-      'Oh no! What went wrong?',
-      'We’ll do better next time.',
-      'Not bad, but room for improvement.',
-      'Great! Thanks for the feedback.',
-      'Awesome! So glad you loved it!',
-    ];
-    if (rating > 0) setHelper(texts[rating - 1]);
-  }, [rating]);
+  const handleInputChange = (field: keyof FeedbackFormData, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleRatingClick = (rating: number) => {
+    setFormData(prev => ({ ...prev, rating }));
+  };
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+
+  try {
+    const res = await fetch('http://localhost:4000/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to submit feedback');
+    }
+
+    setSubmitted(true);
+  } catch (error) {
+    console.error(error);
+    alert('Something went wrong. Please try again later.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+  const resetForm = () => {
+    setFormData({
+      organizationName: '',
+      reviewFor: '',
+      menuItem: '',
+      rating: 0,
+      content: '',
+      email: '',
+    });
+    setSubmitted(false);
+  };
 
   if (submitted) {
     return (
-  <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-yellow-50 to-orange-50 overflow-hidden">
-    <FloatingFoodIcons />
-
-    <div className="bg-white p-8 rounded-3xl shadow-xl border border-green-50 flex flex-col items-center text-center">
-      <motion.h2
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-orange-600"
-      >
-        Thank You!
-      </motion.h2>
-
-      <p className="mb-4 text-gray-700">
-        You rated us <span className="font-semibold">{rating}</span> star{rating > 1 ? 's' : ''}.
-      </p>
-
-      <motion.button
-        onClick={() => {
-          setSubmitted(false);
-          setRating(0);
-          setComment('');
-          setHelper('Tap a star to rate');
-        }}
-        whileHover={{ scale: 1.03 }}
-        className="mt-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-      >
-        Give More Feedback
-      </motion.button>
-    </div>
-  </div>
-);
+      <div className="min-h-screen bg-gray-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-2xl mx-auto px-6 py-12"
+        >
+          <Card className="p-8 text-center" glow={true} hoverEffect={false}>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+            >
+              <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+            </motion.div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h2>
+            <p className="text-gray-600 mb-6">
+              Your feedback has been submitted successfully. We appreciate your time and input!
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={resetForm} variant="solid" size="lg">
+                Submit Another Review
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    );
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-yellow-50 to-orange-50 overflow-hidden">
-      <FloatingFoodIcons />
-
-      <div className="p-8 w-80 bg-white rounded-3xl shadow-xl border border-green-50 flex flex-col items-center">
-
-
-        <motion.h2
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 120, damping: 12 }}
-          className="text-2xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-orange-600"
-        >
-          Rate & Review
-        </motion.h2>
-
-        {/* Stars */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.05 } }
-          }}
-          className="flex justify-center mb-2 space-x-1"
-        >
-          {[1,2,3,4,5].map(i => (
+    <div className="min-h-screen bg-black-50">
+      {/* <div className="bg-white border-b border-gray-200"> */}
+        {/* <div className="max-w-6xl mx-auto px-6 py-6">
+          <motion.div
+            className="flex items-center gap-3"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <motion.div
-              key={i}
-              variants={{
-                hidden: { scale: 0 },
-                visible: { scale: 1 }
-              }}
+              className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={{ duration: 0.2 }}
             >
-              <Star
-                className={`h-8 w-8 cursor-pointer ${i <= rating ? 'text-yellow-500' : 'text-gray-300'}`}
-                onClick={() => setRating(i)}
-              />
+              <MessageSquare className="text-white" size={16} />
             </motion.div>
-          ))}
-        </motion.div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Create Review</h1>
+              <p className="text-sm text-gray-600">NGO reviewing a restaurant experience</p>
+            </div>
+          </motion.div>
+        </div> */}
+      {/* </div> */}
 
-        {/* Helper text */}
-        <p className="text-sm text-gray-600 mb-4 italic text-center">{helper}</p>
-
-        {/* Comment box with character count */}
-        <textarea
-          rows={4}
-          value={comment}
-          onChange={e => setComment(e.target.value.slice(0, MAX_COMMENT))}
-          placeholder="Your feedback…"
-          className="w-full px-3 py-2 mb-1 border rounded-lg focus:ring-2 focus:ring-green-500 transition"
-        />
-        <p className="text-xs text-gray-500 text-right mb-4">
-          {comment.length}/{MAX_COMMENT}
-        </p>
-
-        {/* Submit button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          onClick={() => { if (rating > 0) setSubmitted(true); }}
-          className={`w-full py-2 rounded-lg text-white font-medium transition ${
-            rating > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed'
-          }`}
-          disabled={rating === 0}
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          Submit
-        </motion.button>
+          <Card className="p-8" glow={true} hoverEffect={false}>
+            <h1 className="text-3xl font-bold text-gray-900 pb-3">Create <span className="bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-3xl font-bold text-transparent">
+                            Review{' '}
+                          </span></h1>
+            <p className="text-lg text-gray-600 pb-3">NGO reviewing a restaurant experience</p>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <input
+                type="text"
+                value={formData.organizationName}
+                onChange={(e) => handleInputChange('organizationName', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="Your NGO Name"
+              />
+              <input
+                type="text"
+                value={formData.reviewFor}
+                onChange={(e) => handleInputChange('reviewFor', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="Restaurant Being Reviewed"
+              />
+              <input
+                type="text"
+                value={formData.menuItem}
+                onChange={(e) => handleInputChange('menuItem', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="Menu Item (optional)"
+              />
+
+              {/* Rating */}
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <motion.button
+                    key={star}
+                    type="button"
+                    onClick={() => handleRatingClick(star)}
+                    className="focus:outline-none"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Star
+                      size={32}
+                      className={`transition-colors duration-200 ${
+                        star <= formData.rating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300 hover:text-yellow-300'
+                      }`}
+                    />
+                  </motion.button>
+                ))}
+              </div>
+
+              <textarea
+                value={formData.content}
+                onChange={(e) => handleInputChange('content', e.target.value)}
+                rows={5}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none"
+                placeholder="Your feedback..."
+                maxLength={500}
+              />
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="your.email@example.com"
+              />
+
+              <Button
+                type="submit"
+                variant="solid"
+                size="lg"
+                isLoading={isSubmitting}
+                className="w-full"
+              >
+                {isSubmitting ? 'Submitting Review...' : 'Submit Review'}
+              </Button>
+            </form>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
