@@ -15,9 +15,15 @@ interface FoodUploadForm {
 
 export default function RestaurantUpload() {
   const [form, setForm] = useState<FoodUploadForm>({
-    name: '', description: '', quantity: '', pickupStartTime: '',
-    pickupEndTime: '', estimatedValue: '', dietaryTags: [],
-    image: '', expiryTime: ''
+    name: '',
+    description: '',
+    quantity: '',
+    pickupStartTime: '',
+    pickupEndTime: '',
+    estimatedValue: '',
+    dietaryTags: [],
+    image: '',
+    expiryTime: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,18 +60,40 @@ export default function RestaurantUpload() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
     try {
-      const res = await fetch('http://localhost:4000/api/servings', {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/food', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error('Failed to save item');
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || res.statusText);
+      }
+
       alert('Item uploaded successfully');
-      setForm({ name: '', description: '', quantity: '', pickupStartTime: '', pickupEndTime: '', estimatedValue: '', dietaryTags: [], image: '', expiryTime: '' });
-    } catch (err) {
-      alert('Error saving item to backend');
+      setForm({
+        name: '',
+        description: '',
+        quantity: '',
+        pickupStartTime: '',
+        pickupEndTime: '',
+        estimatedValue: '',
+        dietaryTags: [],
+        image: '',
+        expiryTime: ''
+      });
+    } catch (err: any) {
+      console.error('Error saving item to backend:', err);
+      alert(`Error saving item: ${err.message}`);
     }
+
     setIsSubmitting(false);
   };
 
@@ -98,31 +126,69 @@ export default function RestaurantUpload() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Food Name *</label>
-              <input type="text" required value={form.name} onChange={e => handleInputChange('name', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="e.g., Grilled Chicken & Vegetables" />
+              <input
+                type="text"
+                required
+                value={form.name}
+                onChange={e => handleInputChange('name', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="e.g., Grilled Chicken & Vegetables"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
-              <input type="text" required value={form.quantity} onChange={e => handleInputChange('quantity', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="e.g., 15 servings, 20 lbs, 25 items" />
+              <input
+                type="text"
+                required
+                value={form.quantity}
+                onChange={e => handleInputChange('quantity', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="e.g., 15 servings, 20 lbs, 25 items"
+              />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <textarea value={form.description} onChange={e => handleInputChange('description', e.target.value)} rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Brief description of the food item, preparation method, etc." />
+            <textarea
+              value={form.description}
+              onChange={e => handleInputChange('description', e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Brief description of the food item, preparation method, etc."
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Start Time *</label>
-              <input type="time" required value={form.pickupStartTime} onChange={e => handleInputChange('pickupStartTime', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              <input
+                type="time"
+                required
+                value={form.pickupStartTime}
+                onChange={e => handleInputChange('pickupStartTime', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Pickup End Time *</label>
-              <input type="time" required value={form.pickupEndTime} onChange={e => handleInputChange('pickupEndTime', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              <input
+                type="time"
+                required
+                value={form.pickupEndTime}
+                onChange={e => handleInputChange('pickupEndTime', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Value ($)</label>
-              <input type="number" value={form.estimatedValue} onChange={e => handleInputChange('estimatedValue', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="0" />
+              <input
+                type="number"
+                value={form.estimatedValue}
+                onChange={e => handleInputChange('estimatedValue', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="0"
+              />
             </div>
           </div>
 
@@ -130,16 +196,37 @@ export default function RestaurantUpload() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Dietary Tags</label>
             <div className="flex flex-wrap gap-2">
               {availableTags.map(tag => (
-                <button key={tag} type="button" onClick={() => handleTagToggle(tag)} className={`px-3 py-1 rounded-full text-sm transition-colors ${form.dietaryTags.includes(tag) ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{tag}</button>
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleTagToggle(tag)}
+                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                    form.dietaryTags.includes(tag)
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {tag}
+                </button>
               ))}
             </div>
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          >
             {isSubmitting ? (
-              <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Uploading...</span></>
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Uploading...</span>
+              </>
             ) : (
-              <><Upload className="w-4 h-4" /><span>Upload Food Item</span></>
+              <>
+                <Upload className="w-4 h-4" />
+                <span>Upload Food Item</span>
+              </>
             )}
           </button>
         </form>
