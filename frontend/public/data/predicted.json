@@ -1,5 +1,5 @@
 {
-  "trainedAt": "2025-06-10T18:21:17.930124",
+  "trainedAt": "2025-06-15T00:00:05.175691",
   "epsilon": 0.2,
   "dishes": [
     "Rajma Chawal",
@@ -10,8 +10,8 @@
     163.2
   ],
   "counts": [
-    28,
-    172
+    27,
+    173
   ],
   "averageRewards": {
     "Biryani": 163.2,
