@@ -1,4 +1,5 @@
 // src/pages/restaurant/TodaysServing.tsx
+
 import React, { useEffect, useState, ChangeEvent } from "react";
 import axios from "axios";
 import { Plus, Trash, Database } from "lucide-react";
@@ -7,6 +8,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 
 interface Serving {
+  id: string;
   name: string;
   costPerPlate: number;
   totalIngredientsCost: number;
@@ -56,13 +58,7 @@ const TodaysServing: React.FC = () => {
   const fetchServings = async () => {
     try {
       const res = await axios.get<Serving[]>("/api/servings");
-      // ensure it's really an array
-      if (Array.isArray(res.data)) {
-        setServings(res.data);
-      } else {
-        console.warn("Expected array, got:", res.data);
-        setServings([]);
-      }
+      setServings(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Fetch servings failed:", err);
       setServings([]);
@@ -73,57 +69,58 @@ const TodaysServing: React.FC = () => {
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const addServing = async () => {
-  const c = parseFloat(form.costPerPlate);
-  const i = parseFloat(form.totalIngredientsCost);
-  const t = parseInt(form.totalPlates, 10);
-  const w = parseInt(form.platesWasted, 10);
+    const c = parseFloat(form.costPerPlate);
+    const i = parseFloat(form.totalIngredientsCost);
+    const t = parseInt(form.totalPlates, 10);
+    const w = parseInt(form.platesWasted, 10);
 
-  if ([c,i,t,w].some(isNaN) || t <= 0) {
-    return alert("Please enter valid numbers and ensure total plates > 0.");
-  }
+    if ([c, i, t, w].some(isNaN) || t <= 0) {
+      return alert("Please enter valid numbers and ensure total plates > 0.");
+    }
 
-  const newServing: Serving = {
-    name: form.name === "Other" ? form.customName : form.name,
-    costPerPlate: c,
-    totalIngredientsCost: i,
-    totalPlates: t,
-    platesWasted: w,
-    totalEarning: +( (c - i/t) * (t - w) ).toFixed(2),
-    remark: form.remark || undefined,
+    const payload = {
+      name: form.name === "Other" ? form.customName : form.name,
+      costPerPlate: c,
+      totalIngredientsCost: i,
+      totalPlates: t,
+      platesWasted: w,
+      totalEarning: +((c - i / t) * (t - w)).toFixed(2),
+      remark: form.remark || undefined,
+    };
+
+    // optimistic UI update
+    setServings(prev => [
+      ...prev,
+      { id: `temp-${Date.now()}`, ...payload },
+    ]);
+
+    setForm({
+      name: "",
+      customName: "",
+      costPerPlate: "",
+      totalIngredientsCost: "",
+      totalPlates: "",
+      platesWasted: "",
+      remark: "",
+    });
+
+    try {
+      await axios.post("/api/servings", payload);
+      fetchServings();
+    } catch (err) {
+      console.error("Could not save to server:", err);
+      alert("Saved locally but failed to persist to server.");
+    }
   };
 
-  // 1) Optimistically show it:
-  setServings(prev => [...prev, newServing]);
-
-  // 2) Clear form:
-  setForm({
-    name: "",
-    customName: "",
-    costPerPlate: "",
-    totalIngredientsCost: "",
-    totalPlates: "",
-    platesWasted: "",
-    remark: "",
-  });
-
-  // 3) Persist in background:
-  try {
-    await axios.post("/api/servings", newServing);
-  } catch (err) {
-    console.error("Could not save to server:", err);
-    alert("Saved locally but failed to persist to server.");
-    // you could add retry logic here
-  }
-};
-
-
-  const removeServing = async (name: string) => {
+  const removeServing = async (id: string) => {
     try {
-      await axios.delete(`/api/servings/${encodeURIComponent(name)}`);
+      console.log("Deleting serving id:", id);
+      await axios.delete(`/api/servings/${encodeURIComponent(id)}`);
       fetchServings();
     } catch (err) {
       console.error("Remove serving failed:", err);
@@ -141,8 +138,7 @@ const TodaysServing: React.FC = () => {
     }
   };
 
-  // fallback array for safe reduce
-  const list = Array.isArray(servings) ? servings : [];
+  const list = servings;
 
   const totalEarnings = list.reduce((sum, s) => sum + s.totalEarning, 0);
   const totalWasteCost = list.reduce(
@@ -168,20 +164,22 @@ const TodaysServing: React.FC = () => {
         </Button>
       </div>
 
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {summaryItems.map(({ title, value }, idx) => (
-          <Card key={idx} className="p-6 text-center bg-gray-100" glow={false}>
+        {summaryItems.map(({ title, value }) => (
+          <Card key={title} className="p-6 text-center bg-gray-100" glow={false}>
             <h4 className="text-lg font-medium text-gray-700">{title}</h4>
             <p className="mt-2 text-2xl font-bold text-green-600">{value}</p>
           </Card>
         ))}
       </div>
 
+      {/* Servings List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {list.map((s, idx) => (
-          <Card key={idx} className="relative p-6 bg-gray-100" glow={false}>
+        {list.map(s => (
+          <Card key={s.id} className="relative p-6 bg-gray-100" glow={false}>
             <button
-              onClick={() => removeServing(s.name)}
+              onClick={() => removeServing(s.id)}
               className="absolute top-4 right-4 text-red-500 hover:text-red-700"
             >
               <Trash size={18} />
@@ -204,6 +202,7 @@ const TodaysServing: React.FC = () => {
         ))}
       </div>
 
+      {/* Add Serving Form */}
       <Card className="p-8 bg-gray-100" glow={false}>
         <h2 className="mb-4 text-2xl font-semibold text-gray-800">
           Add Serving
@@ -218,22 +217,16 @@ const TodaysServing: React.FC = () => {
               onChange={handleChange}
               className="w-full rounded-md border border-gray-200 p-2 text-black focus:ring-2 focus:ring-green-200"
             >
-              <option value="" disabled>
-                Select a Dish
-              </option>
-              {commonDishes.map((dish) => (
-                <option key={dish} value={dish}>
-                  {dish}
-                </option>
+              <option value="" disabled>Select a Dish</option>
+              {commonDishes.map(dish => (
+                <option key={dish} value={dish}>{dish}</option>
               ))}
             </select>
           </div>
 
           {form.name === "Other" && (
             <div>
-              <label className="block mb-1 text-gray-700">
-                Custom Dish Name
-              </label>
+              <label className="block mb-1 text-gray-700">Custom Dish Name</label>
               <input
                 type="text"
                 name="customName"
@@ -246,44 +239,19 @@ const TodaysServing: React.FC = () => {
           )}
 
           {[
-            {
-              label: "Cost Per Plate ($)",
-              name: "costPerPlate",
-              type: "number",
-              placeholder: "0.00",
-            },
-            {
-              label: "Total Ingredients Cost ($)",
-              name: "totalIngredientsCost",
-              type: "number",
-              placeholder: "0.00",
-            },
-            {
-              label: "Total Plates",
-              name: "totalPlates",
-              type: "number",
-              placeholder: "0",
-            },
-            {
-              label: "Plates Wasted",
-              name: "platesWasted",
-              type: "number",
-              placeholder: "0",
-            },
-            {
-              label: "Remark",
-              name: "remark",
-              type: "text",
-              placeholder: "Optional remark",
-            },
+            { label: "Cost Per Plate ($)",       name: "costPerPlate",         type: "number", placeholder: "0.00" },
+            { label: "Total Ingredients Cost ($)", name: "totalIngredientsCost", type: "number", placeholder: "0.00" },
+            { label: "Total Plates",              name: "totalPlates",          type: "number", placeholder: "0" },
+            { label: "Plates Wasted",             name: "platesWasted",         type: "number", placeholder: "0" },
+            { label: "Remark",                    name: "remark",               type: "text",   placeholder: "Optional remark" },
           ].map(({ label, name, type, placeholder }) => (
             <div key={name}>
               <label className="block mb-1 text-gray-700">{label}</label>
               <input
                 type={type}
                 name={name}
-                placeholder={placeholder}
                 value={(form as any)[name]}
+                placeholder={placeholder}
                 onChange={handleChange}
                 className="w-full rounded-md border border-gray-200 p-2 text-black focus:ring-2 focus:ring-green-200"
               />

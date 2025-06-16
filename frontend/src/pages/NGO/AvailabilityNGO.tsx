@@ -1,3 +1,5 @@
+// src/pages/NGO/AvailabilityNGO.tsx
+
 import React, { useEffect, useState } from 'react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/NgoBadge';
@@ -9,99 +11,142 @@ import {
   ChefHat,
   MapPin,
   Eye,
-  Heart,
   Timer,
   ShoppingCart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const AvailabilityNGO: React.FC = () => {
-  const [foodItems, setFoodItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showCart, setShowCart] = useState(false);
+export interface FoodItem {
+  id: string;
+  name: string;
+  description?: string;
+  quantity: string;
+  pickupStartTime: string;
+  pickupEndTime: string;
+  estimatedValue: string;
+  dietaryTags: string[];
+  image: string;
+  expiryTime: string;
+  restaurant: string;
+  /** widened to string so TS accepts whatever comes back */
+  status: string;
+}
 
-  // summary stats...
+const AvailabilityNGO: React.FC = () => {
+  const [foodItems, setFoodItems]   = useState<FoodItem[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [showCart, setShowCart]     = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   const [summary, setSummary] = useState({
-    availableCount: 0,
-    totalValue: 0,
+    availableCount:     0,
+    totalValue:         0,
     nearestExpiryHours: 0,
-    activeRestaurants: 0,
+    activeRestaurants:  0,
   });
 
+  // Fetch data + compute summary
   useEffect(() => {
-    fetch('http://localhost:4000/api/available-food')
-      .then((res) => res.json())
-      .then((data) => {
-        setFoodItems(data);
-        setLoading(false);
-        computeSummary(data);
+    const token = localStorage.getItem('token');
+    fetch('/api/available-food', {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
       })
-      .catch((err) => {
+      .then(data => {
+        const items = Array.isArray(data) ? data : [];
+        setFoodItems(items);
+        computeSummary(items);
+      })
+      .catch(err => {
         console.error('Failed to fetch available-food:', err);
-        setLoading(false);
-      });
+        setFoodItems([]);
+        computeSummary([]);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const computeSummary = (data: any[]) => {
-    const available = data.filter(i => i.status === 'available');
-    const totalVal = available.reduce((sum, i) => sum + parseFloat(i.estimatedValue || '0'), 0);
-    const restSet = new Set(available.map(i => i.restaurant));
-    const now = Date.now();
-    const hoursArr = available.map(i => {
+  // Summary stats
+  const computeSummary = (data: FoodItem[]) => {
+    const items     = Array.isArray(data) ? data : [];
+    const available = items.filter(i => i.status === 'available');
+    const totalVal  = available.reduce(
+      (sum, i) => sum + parseFloat(i.estimatedValue || '0'),
+      0
+    );
+    const restSet   = new Set(available.map(i => i.restaurant));
+    const now       = Date.now();
+    const hoursArr  = available.map(i => {
       const [h, m] = (i.pickupEndTime || '').split(':').map(Number);
       if (isNaN(h)) return Infinity;
-      const exp = new Date();
-      exp.setHours(h, m, 0, 0);
+      const exp = new Date(); exp.setHours(h, m, 0, 0);
       return (exp.getTime() - now) / 36e5;
     });
-    const nearest = hoursArr.length ? Math.max(0, Math.min(...hoursArr)) : 0;
+    const nearest = hoursArr.length
+      ? Math.max(0, Math.min(...hoursArr))
+      : 0;
+
     setSummary({
-      availableCount: available.length,
-      totalValue: totalVal,
+      availableCount:     available.length,
+      totalValue:         totalVal,
       nearestExpiryHours: Math.floor(nearest),
-      activeRestaurants: restSet.size,
+      activeRestaurants:  restSet.size,
     });
   };
 
-  const toggleReserve = (item: any) => {
-    const url = item.status === 'available'
-      ? 'http://localhost:4000/api/reserve-food'
-      : 'http://localhost:4000/api/unreserve-food';
+  // Reserve/unreserve
+  const toggleReserve = (item: FoodItem) => {
+    const token = localStorage.getItem('token');
+    const url   = item.status === 'available'
+      ? '/api/reserve-food'
+      : '/api/unreserve-food';
+
     fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ id: item.id }),
     })
-    .then(res => res.json())
-    .then(() => {
-      // flip status locally
-      const updated = foodItems.map(f =>
-        f.id === item.id
-          ? { ...f, status: f.status === 'available' ? 'reserved' : 'available' }
-          : f
-      );
-      setFoodItems(updated);
-      computeSummary(updated);
-    })
-    .catch(err => {
-      console.error('toggleReserve error:', err);
-      alert('Action failed');
-    });
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(() => {
+        const updated = (Array.isArray(foodItems) ? foodItems : []).map(f =>
+          f.id === item.id
+            ? { ...f, status: f.status === 'available' ? 'reserved' : 'available' }
+            : f
+        );
+        setFoodItems(updated);
+        computeSummary(updated);
+      })
+      .catch(err => {
+        console.error('toggleReserve error:', err);
+        alert('Action failed');
+      });
   };
 
+  // Time-left display
   const calculateTimeLeft = (timeStr = '') => {
     if (!timeStr) return 'N/A';
     const [h, m] = timeStr.split(':').map(Number);
-    const now = new Date();
-    const exp = new Date();
+    const now = new Date(), exp = new Date();
     exp.setHours(h, m, 0, 0);
     const diff = exp.getTime() - now.getTime();
     if (diff <= 0) return 'Expired';
-    const hrs = Math.floor(diff / 36e5);
+    const hrs  = Math.floor(diff / 36e5);
     const mins = Math.floor((diff % 36e5) / 6e4);
     return `${hrs > 0 ? `${hrs} hr ` : ''}${mins} min left`;
   };
 
+  // Stats cards
   const statCards = [
     {
       title: 'Available Items',
@@ -137,16 +182,22 @@ const AvailabilityNGO: React.FC = () => {
     }
   ];
 
-  const reservedItems = foodItems.filter(i => i.status === 'reserved');
+  // Cart items
+  const reservedItems = Array.isArray(foodItems)
+    ? foodItems.filter(i => i.status === 'reserved')
+    : [];
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header + Cart button */}
+      {/* Header + Cart */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Available <span className="bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-3xl font-bold text-transparent">
-                            Food{' '}
-                          </span></h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Available{' '}
+            <span className="bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-3xl font-bold text-transparent">
+              Food
+            </span>
+          </h1>
           <p className="text-gray-600">Live updates from restaurants</p>
         </div>
         <button
@@ -187,7 +238,7 @@ const AvailabilityNGO: React.FC = () => {
         })}
       </div>
 
-      {/* Grid of items */}
+      {/* Food Grid */}
       {loading ? (
         <p className="text-center text-gray-500">Loading...</p>
       ) : foodItems.length === 0 ? (
@@ -201,7 +252,8 @@ const AvailabilityNGO: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <Card className="overflow-hidden group">
+              <Card className="overflow-hidden group flex flex-col h-full">
+                {/* IMAGE + BADGE + TIMER */}
                 <div className="relative">
                   <img
                     src={item.image}
@@ -209,7 +261,10 @@ const AvailabilityNGO: React.FC = () => {
                     className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute top-4 right-4">
-                    <Badge variant={item.status === 'available' ? 'success' : 'warning'} size="sm">
+                    <Badge
+                      variant={item.status === 'available' ? 'success' : 'warning'}
+                      size="sm"
+                    >
                       {item.status}
                     </Badge>
                   </div>
@@ -222,7 +277,8 @@ const AvailabilityNGO: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-6">
+                {/* DETAILS */}
+                <div className="p-6 flex-1">
                   <h3 className="font-bold text-gray-900 text-lg mb-2">{item.name}</h3>
                   <div className="flex items-center text-gray-600 mb-2">
                     <ChefHat className="w-4 h-4 mr-2" />
@@ -233,7 +289,7 @@ const AvailabilityNGO: React.FC = () => {
                     <span>Nearby</span>
                   </div>
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {item.dietaryTags?.map((tag: string, i: number) => (
+                    {item.dietaryTags?.map((tag, i) => (
                       <Badge key={i} variant="info" size="sm">{tag}</Badge>
                     ))}
                   </div>
@@ -249,9 +305,21 @@ const AvailabilityNGO: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* ACTIONS */}
+                <div className="px-6 pb-6 flex items-center space-x-2">
+                  {/* <button
+                    onClick={() =>
+                      setExpandedId(prev => (prev === item.id ? null : item.id))
+                    }
+                    className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
+                  >
+                    <Eye className="w-5 h-5 text-gray-600" />
+                  </button> */}
                   <button
                     onClick={() => toggleReserve(item)}
-                    className={`w-full py-2 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
                       item.status === 'available'
                         ? 'bg-gradient-to-r from-green-500 to-orange-500 text-white hover:shadow-lg'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -260,13 +328,25 @@ const AvailabilityNGO: React.FC = () => {
                     {item.status === 'available' ? 'Reserve Now' : 'Unreserve'}
                   </button>
                 </div>
+
+                {/* EXPANDED SECTION */}
+                {expandedId === item.id && (
+                  <div className="border-t px-6 pb-6 bg-gray-50">
+                    <p className="text-sm text-gray-700 mb-1">
+                      <strong>Description:</strong> {item.description || 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <strong>Published:</strong> {item.expiryTime}
+                    </p>
+                  </div>
+                )}
               </Card>
             </motion.div>
           ))}
         </div>
       )}
 
-      {/* Cart Panel */}
+      {/* CART PANEL */}
       <AnimatePresence>
         {showCart && (
           <motion.div
@@ -277,7 +357,12 @@ const AvailabilityNGO: React.FC = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Your Cart</h2>
-              <button onClick={() => setShowCart(false)} className="text-gray-500 hover:text-gray-800">×</button>
+              <button
+                onClick={() => setShowCart(false)}
+                className="text-gray-500 hover:text-gray-800"
+              >
+                ×
+              </button>
             </div>
             {reservedItems.length === 0 ? (
               <p className="text-gray-500">No reserved items.</p>
