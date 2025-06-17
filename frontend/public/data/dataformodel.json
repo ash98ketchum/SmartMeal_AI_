@@ -27,5 +27,21 @@
   {
     "date": "2025-06-15",
     "items": []
+  },
+  {
+    "date": "2025-06-17",
+    "items": [
+      {
+        "id": "1750162249849",
+        "date": "2025-06-17",
+        "name": "Idli Sambhar",
+        "costPerPlate": 454,
+        "totalIngredientsCost": 3,
+        "totalPlates": 3,
+        "platesWasted": 3,
+        "totalEarning": 0,
+        "remark": "Very tasty "
+      }
+    ]
   }
 ]
