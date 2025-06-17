@@ -5,7 +5,7 @@ import { Utensils } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 
-// Named export of the Prediction interface
+// ⇢ Export the interface so PredictionsSection can import it:
 export interface Prediction {
   dishName: string;
   imageUrl: string;
@@ -51,14 +51,14 @@ const PredictionCard: React.FC<PredictionCardProps> = ({ prediction, index }) =>
     >
       <Card className="overflow-visible bg-white hover:shadow-lg" glow={false}>
         <div className="flex flex-col md:flex-row items-center md:items-start p-4">
-          {/* Placeholder icon */}
+          {/* icon */}
           <div className="flex-shrink-0">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50">
               <Utensils className="h-10 w-10 text-green-600" />
             </div>
           </div>
 
-          {/* Details */}
+          {/* details */}
           <div className="mt-4 md:mt-0 md:ml-4 flex-1 space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-800">
@@ -70,7 +70,6 @@ const PredictionCard: React.FC<PredictionCardProps> = ({ prediction, index }) =>
                 className="!absolute !top-2 !right-2"
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4 text-gray-700 text-sm">
               <div>
                 <p className="font-medium text-green-600">

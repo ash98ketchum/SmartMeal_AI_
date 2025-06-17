@@ -3,49 +3,55 @@ import axios from "axios";
 
 import PredictionCard, { Prediction } from "./PredictionCard";
 
-const PredictionsSection: React.FC = () => {
+interface RawPredictions {
+  trainedAt: string;
+  epsilon: number;
+  dishes: string[];
+  q_values: number[];
+  counts: number[];
+  averageRewards: Record<string, number>;
+  bestAction: { dish: string; value: number };
+}
+
+const PredictionSection: React.FC = () => {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        // 1) Fetch bandit summary
-        const { data: summary } = await axios.get<{
-          epsilon: number;
-          dishes: string[];
-          q_values: Record<string, number>;
-          counts: Record<string, number>;
-        }>("/api/model/summary");
+        // 1) Load your static bandit summary (no auth needed)
+        const { data: summary } = await axios.get<RawPredictions>(
+          "/data/predicted.json"
+        );
 
-        // 2) Fetch today's actual servings
+        // 2) Load today's actual servings (requires auth header if you have one globally set)
         const { data: servings } = await axios.get<
           { name: string; totalEarning: number }[]
         >("/api/servings");
 
-        // 3) Build actual earnings map
+        // Build an actual‐earnings map
         const actualMap: Record<string, number> = {};
         servings.forEach((s) => {
           actualMap[s.name] = (actualMap[s.name] || 0) + s.totalEarning;
         });
 
-        // 4) Compute total selection count for confidence
-        const totalCount =
-          Object.values(summary.counts).reduce((a, b) => a + b, 0) || 1;
+        // Total selection count → for confidence
+        const totalCount = summary.counts.reduce((sum, c) => sum + c, 0) || 1;
 
-        // 5) Assemble Prediction list
-        const list: Prediction[] = summary.dishes.map((dish) => {
-          const predictedValue = summary.q_values[dish] || 0;
-          const actualValue    = actualMap[dish] || 0;
-          const saved          = actualValue - predictedValue;
-          const confidence     = Math.round(
-            ((summary.counts[dish] || 0) / totalCount) * 100
+        // 3) Map into your Prediction interface
+        const list: Prediction[] = summary.dishes.map((dish, i) => {
+          const predictedValue = summary.averageRewards[dish] || 0;
+          const actualValue = actualMap[dish] || 0;
+          const saved = actualValue - predictedValue;
+          const confidence = Math.round(
+            (summary.counts[i] / totalCount) * 100
           );
 
           return {
             dishName: dish,
             imageUrl: `/images/${encodeURIComponent(dish)}.jpg`, // placeholder
-            ingredients: [], // fill in later
+            ingredients: [], // fill if you have this data
             predictedValue,
             actualValue,
             saved,
@@ -53,7 +59,7 @@ const PredictionsSection: React.FC = () => {
           };
         });
 
-        // 6) Sort & pick top 5
+        // 4) Show top 5 by predictedValue
         list.sort((a, b) => b.predictedValue - a.predictedValue);
         setPredictions(list.slice(0, 5));
       } catch (err) {
@@ -67,7 +73,6 @@ const PredictionsSection: React.FC = () => {
   if (loading) {
     return <div className="py-8 text-center text-gray-500">Loading...</div>;
   }
-
   if (!predictions.length) {
     return (
       <div className="py-8 text-center text-gray-500">
@@ -90,4 +95,4 @@ const PredictionsSection: React.FC = () => {
   );
 };
 
-export default PredictionsSection;
+export default PredictionSection;
