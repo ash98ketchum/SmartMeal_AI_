@@ -273,7 +273,27 @@ app.get('/api/predicted/:period', requireAuth, (req, res) => {
   const sum = readSummary('predicted');
   res.json({ epsilon: sum.epsilon || 0, series });
 });
+// ------------------for fetching data from predicted.json to history---------
+app.get('/api/predictions', (req, res) => {
+  try {
+    const file = dataPath('predicted');
+    const data = readJson(file);
 
+    const predictions = data.dishes.map((dish, index) => ({
+      dishName: dish,
+      qValue: parseFloat(data.q_values[index].toFixed(2)),
+      count: data.counts[index],
+      isBest: dish === data.bestAction.dish
+    }));
+
+    res.json(predictions); // This returns an array!
+  } catch (err) {
+    console.error('Error reading predictions:', err);
+    res.status(500).json({ error: 'Failed to load predictions' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 app.get('/api/metrics/weekly', requireAuth, (req, res) => {
   res.json(readSummary('metricsWeekly'));
 });

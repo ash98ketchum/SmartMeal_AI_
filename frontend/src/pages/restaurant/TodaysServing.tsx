@@ -239,9 +239,9 @@ const TodaysServing: React.FC = () => {
           )}
 
           {[
-            { label: "Cost Per Plate ($)",       name: "costPerPlate",         type: "number", placeholder: "0.00" },
+            { label: "Cost Per Servings ($)",       name: "costPerPlate",         type: "number", placeholder: "0.00" },
             { label: "Total Ingredients Cost ($)", name: "totalIngredientsCost", type: "number", placeholder: "0.00" },
-            { label: "Total Plates",              name: "totalPlates",          type: "number", placeholder: "0" },
+            { label: "Total Serving",              name: "totalPlates",          type: "number", placeholder: "0" },
             { label: "Plates Wasted",             name: "platesWasted",         type: "number", placeholder: "0" },
             { label: "Remark",                    name: "remark",               type: "text",   placeholder: "Optional remark" },
           ].map(({ label, name, type, placeholder }) => (

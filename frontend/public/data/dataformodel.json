@@ -32,15 +32,26 @@
     "date": "2025-06-17",
     "items": [
       {
-        "id": "1750162249849",
+        "id": "1750186787194",
         "date": "2025-06-17",
-        "name": "Idli Sambhar",
-        "costPerPlate": 454,
-        "totalIngredientsCost": 3,
-        "totalPlates": 3,
-        "platesWasted": 3,
-        "totalEarning": 0,
-        "remark": "Very tasty "
+        "name": "Kadhi Chawal",
+        "costPerPlate": 150,
+        "totalIngredientsCost": 60,
+        "totalPlates": 30,
+        "platesWasted": 10,
+        "totalEarning": 2960,
+        "remark": "tasty"
+      },
+      {
+        "id": "1750187300371",
+        "date": "2025-06-17",
+        "name": "Lassi",
+        "costPerPlate": 55,
+        "totalIngredientsCost": 80,
+        "totalPlates": 12,
+        "platesWasted": 4,
+        "totalEarning": 386.67,
+        "remark": "Very sweet"
       }
     ]
   }

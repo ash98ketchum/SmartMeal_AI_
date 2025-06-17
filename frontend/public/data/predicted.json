@@ -1,28 +1,32 @@
 {
-  "trainedAt": "2025-06-17T18:16:06.135876",
+  "trainedAt": "2025-06-18T00:45:07.289710",
   "epsilon": 0.2,
   "dishes": [
     "Rajma Chawal",
     "Biryani",
-    "Idli Sambhar"
+    "Kadhi Chawal",
+    "Lassi"
   ],
   "q_values": [
     126.0,
     163.2,
-    0.0
+    2960.0,
+    386.67
   ],
   "counts": [
-    31,
-    156,
-    13
+    20,
+    18,
+    147,
+    15
   ],
   "averageRewards": {
     "Biryani": 163.2,
-    "Idli Sambhar": 0.0,
+    "Kadhi Chawal": 2960.0,
+    "Lassi": 386.67,
     "Rajma Chawal": 126.0
   },
   "bestAction": {
-    "dish": "Biryani",
-    "value": 163.2
+    "dish": "Kadhi Chawal",
+    "value": 2960.0
   }
 }
