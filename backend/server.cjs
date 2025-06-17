@@ -32,6 +32,8 @@ const FILES = {
   metricsWeekly:  'metrics_weekly.json',
   metricsMonthly: 'metrics_monthly.json',
   foodItems:      'foodItems.json',
+  reserved:       'reserved.json',  
+  cart:           'cart.json',
 };
 
 const dataPath   = k => path.join(DATA_DIR,      FILES[k]);
@@ -103,14 +105,11 @@ app.post('/api/v1/auth/login', async (req, res) => {
 });
 
 // ── Servings endpoints ──────────────────────────────────────────────────────────
-
-// GET today's servings (now injecting missing IDs)
 app.get('/api/servings', requireAuth, (req, res) => {
   const all   = readJson(dataPath('today'));
   const today = new Date().toISOString().split('T')[0];
   const filtered = all.filter(s => s.date === today);
 
-  // Inject IDs for legacy entries
   let needsSave = false;
   filtered.forEach(s => {
     if (!s.id) {
@@ -129,7 +128,6 @@ app.get('/api/servings', requireAuth, (req, res) => {
   res.json(filtered);
 });
 
-// POST a new serving (with ID)
 app.post('/api/servings', requireAuth, (req, res) => {
   const arr   = readJson(dataPath('today'));
   const today = new Date().toISOString().split('T')[0];
@@ -145,7 +143,6 @@ app.post('/api/servings', requireAuth, (req, res) => {
   res.json({ message: 'Added', item });
 });
 
-// DELETE a serving by ID
 app.delete('/api/servings/:id', requireAuth, (req, res) => {
   const all      = readJson(dataPath('today'));
   const filtered = all.filter(s => s.id !== req.params.id);
@@ -182,26 +179,21 @@ app.get('/api/feedback', (req, res) => {
   res.json(feedbacks);
 });
 
-// --------------------Serve reviews--------------------------------------------
 app.get("/api/reviews", (req, res) => {
   const filePath = path.join(__dirname, "data", "feedback.json");
-
   fs.readFile(filePath, "utf-8", (err, data) => {
     if (err) {
       console.error("Error reading reviews:", err);
       return res.status(500).json({ error: "Failed to read reviews." });
     }
-
     try {
       const raw = JSON.parse(data);
-
-      // Transform data to match Review interface
       const reviews = raw.map((item) => ({
         id: item.id,
         reviewerName: item.organizationName,
-        reviewerType: "ngo", // or infer dynamically if needed
+        reviewerType: "ngo",
         targetName: item.reviewFor,
-        targetType: "restaurant", // or infer
+        targetType: "restaurant",
         rating: item.rating,
         comment: item.content,
         date: item.submittedAt,
@@ -209,13 +201,22 @@ app.get("/api/reviews", (req, res) => {
         helpful: 0,
         verified: true,
       }));
-
       res.json(reviews);
     } catch (parseError) {
       console.error("Error parsing reviews:", parseError);
       res.status(500).json({ error: "Invalid reviews format." });
     }
   });
+});
+
+// ── Save Cart endpoint ──────────────────────────────────────────────────────────
+app.post('/api/save-cart', requireAuth, (req, res) => {
+  const { items } = req.body;
+  if (!Array.isArray(items)) {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
+  syncJson('cart', items);
+  res.json({ message: 'Cart saved' });
 });
 
 // ── Archive & reset ─────────────────────────────────────────────────────────────
@@ -273,27 +274,7 @@ app.get('/api/predicted/:period', requireAuth, (req, res) => {
   const sum = readSummary('predicted');
   res.json({ epsilon: sum.epsilon || 0, series });
 });
-// ------------------for fetching data from predicted.json to history---------
-app.get('/api/predictions', (req, res) => {
-  try {
-    const file = dataPath('predicted');
-    const data = readJson(file);
 
-    const predictions = data.dishes.map((dish, index) => ({
-      dishName: dish,
-      qValue: parseFloat(data.q_values[index].toFixed(2)),
-      count: data.counts[index],
-      isBest: dish === data.bestAction.dish
-    }));
-
-    res.json(predictions); // This returns an array!
-  } catch (err) {
-    console.error('Error reading predictions:', err);
-    res.status(500).json({ error: 'Failed to load predictions' });
-  }
-});
-
-// ---------------------------------------------------------------------------
 app.get('/api/metrics/weekly', requireAuth, (req, res) => {
   res.json(readSummary('metricsWeekly'));
 });
@@ -324,45 +305,91 @@ app.delete('/api/events/:id', requireAuth, (req, res) => {
   res.json({ message: 'Event deleted' });
 });
 
-// ── Recalibration endpoint ─────────────────────────────────────────────────────
-app.post('/api/recalibrate', requireAuth, (req, res) => {
-  exec(`${PYTHON_CMD} train_model.py --episodes=200`, { cwd: __dirname }, err => {
-    if (err) return res.status(500).json({ message: 'Recalibration failed' });
-    res.json({ message: 'Recalibration complete' });
-  });
-});
-
-// ── Food-reservation endpoints ─────────────────────────────────────────────────
+// ── Food-reservation endpoints ──────────────────────────────────────────────────
 app.post('/api/food', requireAuth, (req, res) => {
   const list = readJson(dataPath('foodItems'));
-  const item = { ...req.body, id: Date.now().toString(), status: 'available' };
+  const item = {
+    ...req.body,
+    id:        Date.now().toString(),
+    status:    'available',
+    createdAt: new Date().toISOString()
+  };
   list.push(item);
   syncJson('foodItems', list);
   res.json({ message: 'Food added', item });
 });
 
-app.get('/api/available-food', requireAuth, (req, res) => {
-  const all = readJson(dataPath('foodItems'));
-  res.json(all.filter(i => i.status === 'available'));
+// ------------------for fetching data from predicted.json to history---------
+app.get('/api/predictions', (req, res) => {
+  try {
+    const file = dataPath('predicted');
+    const data = readJson(file);
+
+    const predictions = data.dishes.map((dish, index) => ({
+      dishName: dish,
+      qValue: parseFloat(data.q_values[index].toFixed(2)),
+      count: data.counts[index],
+      isBest: dish === data.bestAction.dish
+    }));
+
+    res.json(predictions); // This returns an array!
+  } catch (err) {
+    console.error('Error reading predictions:', err);
+    res.status(500).json({ error: 'Failed to load predictions' });
+  }
 });
 
+// ── GET available food (for NGO) ───────────────────────────────────────────────
+app.get('/api/available-food', requireAuth, (req, res) => {
+  // 1) Load the raw list
+  const all   = readJson(dataPath('foodItems'));
+  const now   = new Date();
+  const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  const todayStr    = now.toISOString().split('T')[0];
+
+  // 2) Back-fill any missing createdAt so old items aren’t instantly dropped
+  all.forEach(item => {
+    if (!item.createdAt) {
+      item.createdAt = now.toISOString();
+    }
+  });
+  // Persist those createdAt additions
+  syncJson('foodItems', all);
+
+  // 3) Filter out only the “fresh” items
+  const fresh = all.filter(item => {
+    if (item.status !== 'available') return false;
+    const created = new Date(item.createdAt);
+    const createdDate = created.toISOString().split('T')[0];
+    return (
+      created >= twoHoursAgo &&
+      createdDate === todayStr
+    );
+  });
+
+  // 4) Overwrite the JSON so expired items truly disappear
+  syncJson('foodItems', fresh);
+
+  // 5) Return what’s left
+  res.json(fresh);
+});
+
+
+// ── Reserve a food item ─────────────────────────────────────────────────────────
 app.post('/api/reserve-food', requireAuth, (req, res) => {
   const { id } = req.body;
   const all    = readJson(dataPath('foodItems'));
   const idx    = all.findIndex(i => i.id === id);
   if (idx < 0) return res.status(404).json({ error: 'Not found' });
-  all[idx].status = 'reserved';
-  syncJson('foodItems', all);
-  res.json({ success: true });
-});
 
-app.post('/api/unreserve-food', requireAuth, (req, res) => {
-  const { id } = req.body;
-  const all    = readJson(dataPath('foodItems'));
-  const idx    = all.findIndex(i => i.id === id);
-  if (idx < 0) return res.status(404).json({ error: 'Not found' });
-  all[idx].status = 'available';
+  all[idx].status     = 'reserved';
+  all[idx].reservedAt = new Date().toISOString();
   syncJson('foodItems', all);
+
+  const reservedList = readJson(dataPath('reserved'), []);
+  reservedList.push(all[idx]);
+  syncJson('reserved', reservedList);
+
   res.json({ success: true });
 });
 
