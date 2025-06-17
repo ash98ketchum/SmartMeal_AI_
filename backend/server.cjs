@@ -182,6 +182,42 @@ app.get('/api/feedback', (req, res) => {
   res.json(feedbacks);
 });
 
+// --------------------Serve reviews--------------------------------------------
+app.get("/api/reviews", (req, res) => {
+  const filePath = path.join(__dirname, "data", "feedback.json");
+
+  fs.readFile(filePath, "utf-8", (err, data) => {
+    if (err) {
+      console.error("Error reading reviews:", err);
+      return res.status(500).json({ error: "Failed to read reviews." });
+    }
+
+    try {
+      const raw = JSON.parse(data);
+
+      // Transform data to match Review interface
+      const reviews = raw.map((item) => ({
+        id: item.id,
+        reviewerName: item.organizationName,
+        reviewerType: "ngo", // or infer dynamically if needed
+        targetName: item.reviewFor,
+        targetType: "restaurant", // or infer
+        rating: item.rating,
+        comment: item.content,
+        date: item.submittedAt,
+        foodItem: item.menuItem || "",
+        helpful: 0,
+        verified: true,
+      }));
+
+      res.json(reviews);
+    } catch (parseError) {
+      console.error("Error parsing reviews:", parseError);
+      res.status(500).json({ error: "Invalid reviews format." });
+    }
+  });
+});
+
 // ── Archive & reset ─────────────────────────────────────────────────────────────
 app.post('/api/archive', requireAuth, (req, res) => {
   const arr       = readJson(dataPath('today'));

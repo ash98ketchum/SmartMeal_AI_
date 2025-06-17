@@ -157,18 +157,16 @@ const Reviews: React.FC = () => {
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
             {/* Reviewer Type */}
             <div className="flex items-center space-x-4">
-              <Filter className="h-5 w-5 text-gray-500" />
+              {/* <Filter className="h-5 w-5 text-gray-500" /> */}
               <div className="flex space-x-2">
                 {[
                   { value: "all", label: "All Reviews" },
-                  { value: "ngo", label: "NGO Reviews" },
-                  { value: "restaurant", label: "Restaurant Reviews" },
+                  // { value: "ngo", label: "NGO Reviews" },
+                  // { value: "restaurant", label: "Restaurant Reviews" },
                 ].map(({ value, label }) => (
                   <button
                     key={value}
-                    onClick={() =>
-                      setFilter(value as "all" | "ngo" | "restaurant")
-                    }
+                   onClick={() => setRating(null)}
                     className={`rounded-lg px-4 py-2 font-medium transition-colors duration-200 ${
                       filter === value
                         ? "bg-green-600 text-white"
