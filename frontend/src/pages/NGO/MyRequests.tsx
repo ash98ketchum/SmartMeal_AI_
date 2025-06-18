@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+// src/pages/ngo/MyRequests.tsx
+
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/NgoBadge';
 import GlowingText from '@/components/ui/GlowingText';
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  ChevronDown, 
+import {
+  Search,
+  Filter,
+  Download,
+  ChevronDown,
   MessageCircle,
   CheckCircle2,
   Clock,
@@ -15,178 +17,154 @@ import {
   FileText,
   TrendingUp,
   Users,
-  Calendar,
-  Activity,
-  X,
-  Plus,
-  Check
+  Plus
 } from 'lucide-react';
 
+interface RequestType {
+  id: number;
+  foodItem: string;
+  quantity: string;
+  status: 'Pending' | 'Approved' | 'Declined';
+  dateCreated: string;       // YYYY-MM-DD
+  partner: string;
+  priority: 'High' | 'Medium' | 'Low';
+  notes: string;
+  estimatedPickup: string;   // e.g. "17:00 - 19:00"
+  requestedBy: string;
+}
+
 const MyRequests: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedRequests, setSelectedRequests] = useState<number[]>([]);
+  const [requests, setRequests]       = useState<RequestType[]>([]);
+  const [searchTerm, setSearchTerm]   = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const requests = [
-    {
-      id: 1001,
-      foodItem: 'Fresh Vegetables & Fruits',
-      quantity: '30 lbs',
-      status: 'Pending',
-      dateCreated: '2024-01-15',
-      partner: 'Green Market Grocery',
-      priority: 'High',
-      notes: 'Urgent need for food bank distribution',
-      estimatedPickup: '2024-01-16',
-      requestedBy: 'Sarah Johnson'
-    },
-    {
-      id: 1002,
-      foodItem: 'Prepared Sandwiches',
-      quantity: '50 items',
-      status: 'Approved',
-      dateCreated: '2024-01-14',
-      partner: 'Downtown Deli',
-      priority: 'Medium',
-      notes: 'For homeless shelter dinner service',
-      estimatedPickup: '2024-01-15',
-      requestedBy: 'Mike Chen'
-    },
-    {
-      id: 1003,
-      foodItem: 'Bakery Items',
-      quantity: '20 pastries',
-      status: 'Completed',
-      dateCreated: '2024-01-13',
-      partner: 'Sweet Dreams Bakery',
-      priority: 'Low',
-      notes: 'Successfully delivered to community center',
-      estimatedPickup: '2024-01-14',
-      requestedBy: 'Emma Davis'
-    },
-    {
-      id: 1004,
-      foodItem: 'Rice & Grains',
-      quantity: '25 lbs',
-      status: 'In Progress',
-      dateCreated: '2024-01-12',
-      partner: 'Asian Fusion Kitchen',
-      priority: 'High',
-      notes: 'Pickup scheduled for tomorrow morning',
-      estimatedPickup: '2024-01-13',
-      requestedBy: 'Alex Rodriguez'
-    },
-    {
-      id: 1005,
-      foodItem: 'Dairy Products',
-      quantity: '15 containers',
-      status: 'Declined',
-      dateCreated: '2024-01-11',
-      partner: 'Farm Fresh Cafe',
-      priority: 'Medium',
-      notes: 'Unable to maintain proper temperature',
-      estimatedPickup: '2024-01-12',
-      requestedBy: 'Lisa Wong'
-    },
-  ];
+  // Load from requests.json on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token') || '';
+    fetch('/api/requests', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(res.statusText);
+        return res.json();
+      })
+      .then((data: any[]) => {
+        const mapped: RequestType[] = data.map((f, i) => {
+          const statusMap: Record<string, RequestType['status']> = {
+            booked:   'Pending',
+            accepted: 'Approved',
+            rejected: 'Declined'
+          };
+          return {
+            id:               Number(f.id) || i,
+            foodItem:         f.name,
+            quantity:         f.quantity,
+            status:           statusMap[f.status] || 'Pending',
+            dateCreated:      (f.reservedAt || f.createdAt || '').split('T')[0],
+            partner:          f.restaurant,
+            priority:         'Medium',
+            notes:            f.description || '',
+            estimatedPickup:  `${f.pickupStartTime || ''} - ${f.pickupEndTime || ''}`,
+            requestedBy:      'You'
+          };
+        });
+        setRequests(mapped);
+      })
+      .catch(err => {
+        console.error('Failed to load requests:', err);
+      });
+  }, []);
 
+  // Expand/collapse
+  const toggleExpandRow = (id: number) =>
+    setExpandedRow(expandedRow === id ? null : id);
+
+  // Filtering and search
+  const filteredRequests = requests.filter(r => {
+    const matchesSearch =
+      r.foodItem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.partner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.requestedBy.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'all' || r.status.toLowerCase() === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Statistics
   const stats = [
-    { 
-      title: 'Pending Requests', 
-      value: requests.filter(r => r.status === 'Pending').length.toString(), 
-      unit: 'awaiting approval', 
-      icon: Clock, 
-      change: '+2 today',
+    {
+      title: 'Pending Requests',
+      value: requests.filter(r => r.status === 'Pending').length.toString(),
+      unit: 'awaiting action',
+      icon: Clock,
+      change: `+${requests.filter(r => r.status === 'Pending').length % 7} today`,
       gradient: 'from-yellow-500 to-yellow-600'
     },
-    { 
-      title: 'Approved Requests', 
-      value: requests.filter(r => r.status === 'Approved').length.toString(), 
-      unit: 'ready for pickup', 
-      icon: CheckCircle2, 
-      change: '+5 this week',
+    {
+      title: 'Approved Requests',
+      value: requests.filter(r => r.status === 'Approved').length.toString(),
+      unit: 'ready for pickup',
+      icon: CheckCircle2,
+      change: `+${requests.filter(r => r.status === 'Approved').length % 5} this week`,
       gradient: 'from-blue-500 to-blue-600'
     },
-    { 
-      title: 'Completed Requests', 
-      value: requests.filter(r => r.status === 'Completed').length.toString(), 
-      unit: 'successfully fulfilled', 
-      icon: TrendingUp, 
-      change: '+12% vs last month',
-      gradient: 'from-green-500 to-green-600'
+    {
+      title: 'Declined Requests',
+      value: requests.filter(r => r.status === 'Declined').length.toString(),
+      unit: 'unable to fulfill',
+      icon: AlertCircle,
+      change: `+${requests.filter(r => r.status === 'Declined').length % 3} today`,
+      gradient: 'from-red-500 to-red-600'
     },
-    { 
-      title: 'Total Requests', 
-      value: requests.length.toString(), 
-      unit: 'all time', 
-      icon: FileText, 
+    {
+      title: 'Total Requests',
+      value: requests.length.toString(),
+      unit: 'all time',
+      icon: FileText,
       change: 'Growing network',
       gradient: 'from-purple-500 to-purple-600'
     },
   ];
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      'Pending': 'warning',
-      'Approved': 'info',
-      'Completed': 'success',
-      'In Progress': 'info',
-      'Declined': 'error',
-    } as const;
-    return variants[status as keyof typeof variants] || 'neutral';
+  const getStatusBadge = (status: RequestType['status']) => {
+    const variants: Record<RequestType['status'], string> = {
+      Pending: 'warning',
+      Approved: 'info',
+      Declined: 'error'
+    };
+    return variants[status] || 'neutral';
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: RequestType['status']) => {
     switch (status) {
-      case 'Pending': return <Clock className="w-4 h-4" />;
-      case 'Approved': case 'In Progress': return <CheckCircle2 className="w-4 h-4" />;
-      case 'Completed': return <CheckCircle2 className="w-4 h-4" />;
+      case 'Pending':  return <Clock className="w-4 h-4" />;
+      case 'Approved': return <CheckCircle2 className="w-4 h-4" />;
       case 'Declined': return <AlertCircle className="w-4 h-4" />;
-      default: return <FileText className="w-4 h-4" />;
+      default:         return <Clock className="w-4 h-4" />;
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: RequestType['priority']) => {
     switch (priority) {
-      case 'High': return 'text-red-600 bg-red-50 border-red-200';
+      case 'High':   return 'text-red-600 bg-red-50 border-red-200';
       case 'Medium': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'Low': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'Low':    return 'text-green-600 bg-green-50 border-green-200';
+      default:       return 'text-gray-600 bg-gray-50 border-gray-200';
     }
-  };
-
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = request.foodItem.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.partner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || request.status.toLowerCase() === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const toggleSelectRequest = (id: number) => {
-    setSelectedRequests(prev => 
-      prev.includes(id) 
-        ? prev.filter(reqId => reqId !== id)
-        : [...prev, id]
-    );
-  };
-
-  const toggleExpandRow = (id: number) => {
-    setExpandedRow(expandedRow === id ? null : id);
   };
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header Section */}
+      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             My{' '}
-           <span className="bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-3xl font-bold text-transparent">
-                            Requests{' '}
-                          </span>
+            <span className="bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-transparent">
+              Requests
+            </span>
           </h1>
           <p className="text-gray-600 text-lg">Track and manage your food pickup requests</p>
         </div>
@@ -200,20 +178,20 @@ const MyRequests: React.FC = () => {
         </motion.button>
       </div>
 
-      {/* Stats Overview */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
+        {stats.map((stat, i) => {
           const Icon = stat.icon;
           return (
             <motion.div
-              key={index}
+              key={i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
             >
               <Card className="p-6 cursor-pointer group">
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${stat.gradient} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                  <div className={`w-12 h-12 bg-gradient-to-br ${stat.gradient} rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <Badge variant="success" size="sm">{stat.change}</Badge>
@@ -229,7 +207,7 @@ const MyRequests: React.FC = () => {
         })}
       </div>
 
-      {/* Search and Filters */}
+      {/* Search & Filters */}
       <Card className="p-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
@@ -238,7 +216,7 @@ const MyRequests: React.FC = () => {
               type="text"
               placeholder="Search requests by food item, partner, or requester..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
             />
           </div>
@@ -246,14 +224,12 @@ const MyRequests: React.FC = () => {
             <div className="relative">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={e => setStatusFilter(e.target.value)}
                 className="appearance-none px-6 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gray-50 hover:bg-white transition-all duration-200 pr-10"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
-                <option value="completed">Completed</option>
-                <option value="in progress">In Progress</option>
                 <option value="declined">Declined</option>
               </select>
               <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -270,41 +246,6 @@ const MyRequests: React.FC = () => {
           </div>
         </div>
 
-        {/* Bulk Actions */}
-        <AnimatePresence>
-          {selectedRequests.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-4 p-4 bg-gradient-to-r from-green-50 to-orange-50 rounded-xl border border-green-200"
-            >
-              {/* <div className="flex items-center justify-between"> */}
-                {/* <span className="text-sm font-medium text-green-800">
-                  {selectedRequests.length} request(s) selected
-                </span> */}
-                {/* <div className="flex gap-2"> */}
-                  {/* <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors duration-200"
-                  >
-                    Approve Selected
-                  </motion.button> */}
-                  {/* <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-1"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Export</span>
-                  </motion.button> */}
-                {/* </div> */}
-              {/* </div> */}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <AnimatePresence>
           {showFilters && (
             <motion.div
@@ -315,7 +256,7 @@ const MyRequests: React.FC = () => {
             >
               <div className="text-sm text-gray-600 mb-2">Quick Filters:</div>
               <div className="flex flex-wrap gap-2">
-                {['High Priority', 'Recent Requests', 'Pending Approval', 'This Week'].map((filter) => (
+                {['High Priority', 'Recent Requests', 'Pending Approval', 'This Week'].map(filter => (
                   <button
                     key={filter}
                     className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-green-100 hover:text-green-700 transition-colors duration-200"
@@ -331,12 +272,12 @@ const MyRequests: React.FC = () => {
 
       {/* Requests Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredRequests.map((request, index) => (
+        {filteredRequests.map((request, idx) => (
           <motion.div
             key={request.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
+            transition={{ duration: 0.5, delay: idx * 0.1 }}
           >
             <Card className="overflow-hidden group cursor-pointer">
               <div className="p-6">
@@ -347,7 +288,7 @@ const MyRequests: React.FC = () => {
                       whileHover={{ scale: 1.1 }}
                       className="w-12 h-12 bg-gradient-to-br from-green-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg"
                     >
-                      #{request.id.toString().slice(-2)}
+                      #{String(request.id).slice(-2)}
                     </motion.div>
                     <div>
                       <h3 className="font-bold text-gray-900 text-lg group-hover:text-green-600 transition-colors duration-200">
@@ -361,13 +302,15 @@ const MyRequests: React.FC = () => {
                       {getStatusIcon(request.status)}
                       <span className="ml-1">{request.status}</span>
                     </Badge>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(request.priority)}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(request.priority)}`}
+                    >
                       {request.priority}
                     </span>
                   </div>
                 </div>
 
-                {/* Details Grid */}
+                {/* Details */}
                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                   <div>
                     <div className="text-gray-500 mb-1">Quantity</div>
@@ -400,33 +343,15 @@ const MyRequests: React.FC = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2"
-                  >
-                    <Check className="w-4 h-4" />
-                    <span>Mark as Completed</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                     onClick={() => toggleExpandRow(request.id)}
                     className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors duration-200"
                   >
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                      expandedRow === request.id ? 'rotate-180' : ''
-                    }`} />
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        expandedRow === request.id ? 'rotate-180' : ''
+                      }`}
+                    />
                   </motion.button>
-                  {/* <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => toggleSelectRequest(request.id)}
-                    className={`p-3 rounded-xl transition-colors duration-200 ${
-                      selectedRequests.includes(request.id)
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                  </motion.button> */}
                 </div>
 
                 {/* Expanded Details */}
@@ -447,22 +372,6 @@ const MyRequests: React.FC = () => {
                             <p><span className="text-gray-600">Current Status:</span> {request.status}</p>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                          {/* <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="px-4 py-2 bg-gradient-to-r from-green-500 to-orange-500 text-white rounded-xl hover:shadow-lg transition-all duration-200 text-sm font-medium"
-                          >
-                            Mark as Completed
-                          </motion.button> */}
-                          {/* <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
-                          >
-                            Start Chat
-                          </motion.button> */}
-                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -474,6 +383,5 @@ const MyRequests: React.FC = () => {
       </div>
     </div>
   );
-};
-
+}
 export default MyRequests;

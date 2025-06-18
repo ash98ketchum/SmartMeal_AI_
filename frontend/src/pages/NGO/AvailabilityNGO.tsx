@@ -50,18 +50,24 @@ const AvailabilityNGO: React.FC = () => {
     activeRestaurants:  0,
   });
 
-  // Load from static JSON and compute summary
+  // Load from API and compute summary
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch('/data/foodItems.json');
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/available-food', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!res.ok) throw new Error(res.statusText);
         const items: FoodItem[] = await res.json();
         setFoodItems(items);
         computeSummary(items);
       } catch (err) {
-        console.error('Failed to load foodItems.json:', err);
+        console.error('Failed to load available-food:', err);
         setFoodItems([]);
         computeSummary([]);
       } finally {
@@ -95,49 +101,49 @@ const AvailabilityNGO: React.FC = () => {
   };
 
   // Reserve / Unreserve handlers
-  const toggleReserve = (item: FoodItem) => {
+  const toggleReserve = async (item: FoodItem) => {
     const url = item.status === 'available'
       ? '/api/reserve-food'
       : '/api/unreserve-food';
 
     setReservingIds(s => new Set(s).add(item.id));
 
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: item.id }),
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(r.statusText);
-        return r.json();
-      })
-      .then(() => {
-        setFoodItems(prev =>
-          prev.map(f =>
-            f.id === item.id
-              ? { ...f, status: f.status === 'available' ? 'reserved' : 'available' }
-              : f
-          )
-        );
-        computeSummary(
-          foodItems.map(f =>
-            f.id === item.id
-              ? { ...f, status: f.status === 'available' ? 'reserved' : 'available' }
-              : f
-          )
-        );
-      })
-      .catch(err => {
-        console.error('toggleReserve error:', err);
-        alert('Action failed');
-      })
-      .finally(() => {
-        setReservingIds(s => {
-          const c = new Set(s);
-          c.delete(item.id);
-          return c;
-        });
+    try {
+      const token = localStorage.getItem('token');
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ id: item.id }),
       });
+      if (!r.ok) throw new Error(r.statusText);
+
+      setFoodItems(prev =>
+        prev.map(f =>
+          f.id === item.id
+            ? { ...f, status: f.status === 'available' ? 'reserved' : 'available' }
+            : f
+        )
+      );
+      computeSummary(
+        foodItems.map(f =>
+          f.id === item.id
+            ? { ...f, status: f.status === 'available' ? 'reserved' : 'available' }
+            : f
+        )
+      );
+    } catch (err) {
+      console.error('toggleReserve error:', err);
+      alert('Action failed');
+    } finally {
+      setReservingIds(s => {
+        const c = new Set(s);
+        c.delete(item.id);
+        return c;
+      });
+    }
   };
 
   // Time-left for pickup
@@ -159,9 +165,13 @@ const AvailabilityNGO: React.FC = () => {
     setSavedSuccess(false);
     const toSave = foodItems.filter(i => i.status === 'reserved');
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/save-cart', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ items: toSave }),
       });
       if (!res.ok) throw new Error(res.statusText);

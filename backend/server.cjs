@@ -1,23 +1,23 @@
 // server.cjs
 
 require('dotenv').config();
-const express         = require('express');
-const fs              = require('fs');
-const path            = require('path');
-const cors            = require('cors');
-const cron            = require('node-cron');
-const { exec }        = require('child_process');
-const bcrypt          = require('bcrypt');
-const jwt             = require('jsonwebtoken');
+const express          = require('express');
+const fs               = require('fs');
+const path             = require('path');
+const cors             = require('cors');
+const cron             = require('node-cron');
+const { exec }         = require('child_process');
+const bcrypt           = require('bcrypt');
+const jwt              = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 
-const prisma      = new PrismaClient();
-const app         = express();
-const PORT        = process.env.PORT || 4000;
-const JWT_SECRET  = process.env.JWT_SECRET || 'changeme';
-const PYTHON_CMD  = process.env.PYTHON_CMD || 'python';
+const prisma     = new PrismaClient();
+const app        = express();
+const PORT       = process.env.PORT || 4000;
+const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+const PYTHON_CMD = process.env.PYTHON_CMD || 'python';
 
-// ── Data directories setup ──────────────────────────────────────────────────────
+// ── Data directories ─────────────────────────────────────────────────────────
 const DATA_DIR          = path.join(__dirname, 'data');
 const FRONTEND_DATA_DIR = path.join(__dirname, '..', 'frontend', 'public', 'data');
 [DATA_DIR, FRONTEND_DATA_DIR].forEach(d => {
@@ -32,12 +32,14 @@ const FILES = {
   metricsWeekly:  'metrics_weekly.json',
   metricsMonthly: 'metrics_monthly.json',
   foodItems:      'foodItems.json',
-  reserved:       'reserved.json',  
+  reserved:       'reserved.json',
   cart:           'cart.json',
+  requests:       'requests.json',
+  ngorequests:    'ngorequests.json',
 };
 
-const dataPath   = k => path.join(DATA_DIR,      FILES[k]);
-const publicPath = k => path.join(FRONTEND_DATA_DIR, FILES[k]);
+const dataPath   = key => path.join(DATA_DIR,      FILES[key]);
+const publicPath = key => path.join(FRONTEND_DATA_DIR, FILES[key]);
 
 function readJson(fp, fallback = []) {
   if (!fs.existsSync(fp)) fs.writeFileSync(fp, JSON.stringify(fallback, null, 2));
@@ -54,13 +56,7 @@ function syncJson(key, data) {
   if (key !== 'today') writeJson(publicPath(key), data);
 }
 
-function readSummary(key) {
-  const raw = readJson(dataPath(key), []);
-  if (Array.isArray(raw)) return raw[0] || {};
-  return raw;
-}
-
-// ── Express middleware ──────────────────────────────────────────────────────────
+// ── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
@@ -75,12 +71,10 @@ function requireAuth(req, res, next) {
   }
 }
 
-// ── Auth routes ─────────────────────────────────────────────────────────────────
+// ── Auth ─────────────────────────────────────────────────────────────────────
 app.post('/api/v1/auth/signup', async (req, res) => {
   const { email, password, role, gstNumber, aadharNumber } = req.body;
-  if (!email || !password || !role) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+  if (!email || !password || !role) return res.status(400).json({ error: 'Missing fields' });
   try {
     const hash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
@@ -104,7 +98,7 @@ app.post('/api/v1/auth/login', async (req, res) => {
   res.json({ token });
 });
 
-// ── Servings endpoints ──────────────────────────────────────────────────────────
+// ── Servings endpoints ─────────────────────────────────────────────────────────
 app.get('/api/servings', requireAuth, (req, res) => {
   const all   = readJson(dataPath('today'));
   const today = new Date().toISOString().split('T')[0];
@@ -112,10 +106,7 @@ app.get('/api/servings', requireAuth, (req, res) => {
 
   let needsSave = false;
   filtered.forEach(s => {
-    if (!s.id) {
-      s.id = Date.now().toString() + Math.random().toString(36).slice(2,6);
-      needsSave = true;
-    }
+    if (!s.id) { s.id = Date.now().toString() + Math.random().toString(36).slice(2,6); needsSave = true; }
   });
 
   if (needsSave) {
@@ -131,13 +122,7 @@ app.get('/api/servings', requireAuth, (req, res) => {
 app.post('/api/servings', requireAuth, (req, res) => {
   const arr   = readJson(dataPath('today'));
   const today = new Date().toISOString().split('T')[0];
-
-  const item = {
-    id: Date.now().toString(),
-    date: today,
-    ...req.body
-  };
-
+  const item  = { id: Date.now().toString(), date: today, ...req.body };
   arr.push(item);
   syncJson('today', arr);
   res.json({ message: 'Added', item });
@@ -150,19 +135,13 @@ app.delete('/api/servings/:id', requireAuth, (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
-// ── Feedback endpoints ──────────────────────────────────────────────────────────
+// ── Feedback endpoints ─────────────────────────────────────────────────────────
 app.post('/api/feedback', (req, res) => {
   try {
     const feedbackPath = path.join(DATA_DIR, 'feedback.json');
-    const newFeedback = {
-      ...req.body,
-      id:          Date.now().toString(),
-      submittedAt: new Date().toISOString()
-    };
-    const existing = fs.existsSync(feedbackPath)
-      ? JSON.parse(fs.readFileSync(feedbackPath, 'utf8'))
-      : [];
-    existing.push(newFeedback);
+    const newFb = { ...req.body, id: Date.now().toString(), submittedAt: new Date().toISOString() };
+    const existing = fs.existsSync(feedbackPath) ? JSON.parse(fs.readFileSync(feedbackPath, 'utf8')) : [];
+    existing.push(newFb);
     fs.writeFileSync(feedbackPath, JSON.stringify(existing, null, 2), 'utf8');
     res.json({ message: 'Feedback submitted successfully' });
   } catch (err) {
@@ -172,52 +151,133 @@ app.post('/api/feedback', (req, res) => {
 });
 
 app.get('/api/feedback', (req, res) => {
-  const feedbackPath = path.join(DATA_DIR, 'feedback.json');
-  const feedbacks = fs.existsSync(feedbackPath)
-    ? JSON.parse(fs.readFileSync(feedbackPath, 'utf8'))
-    : [];
+  const fp = path.join(DATA_DIR, 'feedback.json');
+  const feedbacks = fs.existsSync(fp) ? JSON.parse(fs.readFileSync(fp, 'utf8')) : [];
   res.json(feedbacks);
 });
 
-app.get("/api/reviews", (req, res) => {
-  const filePath = path.join(__dirname, "data", "feedback.json");
-  fs.readFile(filePath, "utf-8", (err, data) => {
-    if (err) {
-      console.error("Error reading reviews:", err);
-      return res.status(500).json({ error: "Failed to read reviews." });
-    }
+// ── Reviews adapter ───────────────────────────────────────────────────────────
+app.get('/api/reviews', (req, res) => {
+  const filePath = path.join(DATA_DIR, 'feedback.json');
+  fs.readFile(filePath, 'utf-8', (err, data) => {
+    if (err) { console.error(err); return res.status(500).json({ error: 'Failed to read reviews.' }); }
     try {
       const raw = JSON.parse(data);
-      const reviews = raw.map((item) => ({
-        id: item.id,
-        reviewerName: item.organizationName,
-        reviewerType: "ngo",
-        targetName: item.reviewFor,
-        targetType: "restaurant",
-        rating: item.rating,
-        comment: item.content,
-        date: item.submittedAt,
-        foodItem: item.menuItem || "",
-        helpful: 0,
-        verified: true,
+      const reviews = raw.map(item => ({
+        id:            item.id,
+        reviewerName:  item.organizationName,
+        reviewerType:  "ngo",
+        targetName:    item.reviewFor,
+        targetType:    "restaurant",
+        rating:        item.rating,
+        comment:       item.content,
+        date:          item.submittedAt,
+        foodItem:      item.menuItem || "",
+        helpful:       0,
+        verified:      true,
       }));
       res.json(reviews);
     } catch (parseError) {
-      console.error("Error parsing reviews:", parseError);
-      res.status(500).json({ error: "Invalid reviews format." });
+      console.error(parseError);
+      res.status(500).json({ error: 'Invalid reviews format.' });
     }
   });
 });
 
-// ── Save Cart endpoint ──────────────────────────────────────────────────────────
+// ── Food Upload ─────────────────────────────────────────────────────────────
+app.post('/api/food', requireAuth, (req, res) => {
+  const list = readJson(dataPath('foodItems'));
+  const item = { ...req.body, id: Date.now().toString(), status: 'available', createdAt: new Date().toISOString() };
+  list.push(item);
+  syncJson('foodItems', list);
+  res.json({ message: 'Food added', item });
+});
+
+// ── Available-Food for NGO ───────────────────────────────────────────────────
+app.get('/api/available-food', requireAuth, (req, res) => {
+  const all = readJson(dataPath('foodItems'));
+  const now = new Date(), twoHoursAgo = new Date(now - 2*60*60*1000), today = now.toISOString().split('T')[0];
+  // backfill createdAt
+  all.forEach(i => { if(!i.createdAt) i.createdAt = now.toISOString(); });
+  syncJson('foodItems', all);
+  const fresh = all.filter(i => i.status==='available' && new Date(i.createdAt)>=twoHoursAgo && i.createdAt.split('T')[0]===today);
+  syncJson('foodItems', fresh);
+  res.json(fresh);
+});
+
+// ── Reserve Food ─────────────────────────────────────────────────────────────
+app.post('/api/reserve-food', requireAuth, (req, res) => {
+  const { id } = req.body;
+  const all = readJson(dataPath('foodItems'));
+  const idx = all.findIndex(i => i.id===id);
+  if (idx<0) return res.status(404).json({ error:'Not found' });
+  all[idx].status = 'reserved';
+  all[idx].reservedAt = new Date().toISOString();
+  syncJson('foodItems', all);
+  const reserved = readJson(dataPath('reserved'), []);
+  reserved.push(all[idx]);
+  syncJson('reserved', reserved);
+  res.json({ success:true });
+});
+
+// ── Save Cart → requests.json ────────────────────────────────────────────────
 app.post('/api/save-cart', requireAuth, (req, res) => {
   const { items } = req.body;
-  if (!Array.isArray(items)) {
-    return res.status(400).json({ error: 'Invalid payload' });
-  }
+  if (!Array.isArray(items)) return res.status(400).json({ error: 'Invalid payload' });
+
+  // Persist cart.json
   syncJson('cart', items);
-  res.json({ message: 'Cart saved' });
+
+  // Append each to requests.json
+  const existing = readJson(dataPath('requests'), []);
+  items.forEach(f => {
+    existing.push({
+      id:              f.id,
+      name:            f.name,
+      quantity:        f.quantity,
+      estimatedValue:  f.estimatedValue,
+      restaurant:      f.restaurant,
+      reservedAt:      f.reservedAt,
+      pickupStartTime: f.pickupStartTime,
+      pickupEndTime:   f.pickupEndTime,
+      status:          'booked'
+    });
+  });
+  syncJson('requests', existing);
+
+  res.json({ message: 'Cart saved and requests created' });
 });
+
+// ── GET all requests ─────────────────────────────────────────────────────────
+app.get('/api/requests', requireAuth, (req, res) => {
+  const all = readJson(dataPath('requests'), []);
+  res.json(all);
+});
+
+// ── Update one request’s status ──────────────────────────────────────────────
+app.post('/api/requests/:id/status', requireAuth, (req, res) => {
+  const { status } = req.body; // 'accepted' or 'rejected'
+  const all = readJson(dataPath('requests'), []);
+  const idx = all.findIndex(r => String(r.id) === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Not found' });
+  all[idx].status = status;
+  syncJson('requests', all);
+  res.json({ message: 'Status updated', id: req.params.id, status });
+});
+
+// ── DELETE helpers ───────────────────────────────────────────────────────────
+app.delete('/api/cart', requireAuth, (req, res) => { syncJson('cart', []); res.json({ message: 'Cart cleared' }); });
+app.delete('/api/reserved/:id', requireAuth, (req, res) => {
+  const all = readJson(dataPath('reserved'), []);
+  syncJson('reserved', all.filter(i => String(i.id) !== req.params.id));
+  res.json({ message: 'Reserved item removed' });
+});
+app.delete('/api/food/:id', requireAuth, (req, res) => {
+  const all = readJson(dataPath('foodItems'), []);
+  syncJson('foodItems', all.filter(i => String(i.id) !== req.params.id));
+  res.json({ message: 'Food item deleted' });
+});
+
 
 // ── Archive & reset ─────────────────────────────────────────────────────────────
 app.post('/api/archive', requireAuth, (req, res) => {
@@ -225,10 +285,8 @@ app.post('/api/archive', requireAuth, (req, res) => {
   const dateStamp = new Date().toISOString().split('T')[0];
   const md        = readJson(dataPath('modelData'));
   const idx       = md.findIndex(d => d.date === dateStamp);
-
   if (idx >= 0) md[idx].items = arr;
   else          md.push({ date: dateStamp, items: arr });
-
   md.sort((a,b) => new Date(a.date) - new Date(b.date));
   syncJson('modelData', md);
   res.json({ message: 'Archived' });
@@ -238,6 +296,7 @@ app.post('/api/reset', requireAuth, (req, res) => {
   syncJson('today', []);
   res.json({ message: 'Today cleared' });
 });
+
 
 // ── Time-series helpers & endpoints ────────────────────────────────────────────
 function getSeries(period) {
@@ -415,7 +474,7 @@ cron.schedule('0 0 * * *', () => {
   }
 });
 
-// ── Static file serving ─────────────────────────────────────────────────────────
+// ── Static file serving ───────────────────────────────────────────────────────
 app.use('/data', express.static(FRONTEND_DATA_DIR));
 const FRONTEND_BUILD = path.join(__dirname, '../frontend/dist');
 app.use(express.static(FRONTEND_BUILD));
