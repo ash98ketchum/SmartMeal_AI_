@@ -8,9 +8,9 @@
     "Lassi"
   ],
   "q_values": [
-    126.0,
+    126,
     163.2,
-    2960.0,
+    2960,
     386.67
   ],
   "counts": [
@@ -21,12 +21,13 @@
   ],
   "averageRewards": {
     "Biryani": 163.2,
-    "Kadhi Chawal": 2960.0,
+    "Kadhi Chawal": 2960,
     "Lassi": 386.67,
-    "Rajma Chawal": 126.0
+    "Rajma Chawal": 126
   },
   "bestAction": {
     "dish": "Kadhi Chawal",
-    "value": 2960.0
-  }
+    "value": 2960
+  },
+  "lastCalibrated": "2025-06-19T08:49:29.560Z"
 }

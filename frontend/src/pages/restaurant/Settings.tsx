@@ -90,15 +90,34 @@ const Settings: React.FC = () => {
   const toggleModelSetting = (key: keyof typeof modelSettings) =>
     setModelSettings((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  // helper to attach JWT
+  const authHeader = () => ({
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+    },
+  });
+
   const recalibrateModel = async () => {
     if (!window.confirm("Run model recalibration now?")) return;
     setIsRecalibrating(true);
+
     try {
-      const res = await axios.post("/api/recalibrate");
-      alert(res.data.message || "Model recalibrated successfully!");
+      // use the correct endpoint and send your auth header
+      const res = await axios.post(
+        "/api/model/recalibrate",
+        {},
+        authHeader()
+      );
+
+      alert(
+        res.data.message || "Model recalibrated successfully!"
+      );
     } catch (err: any) {
-      console.error(err);
-      alert("Recalibration failed: " + (err.response?.data?.error || err.message));
+      console.error("Recalibrate failed:", err);
+      alert(
+        "Recalibration failed: " +
+          (err.response?.data?.error || err.message)
+      );
     } finally {
       setIsRecalibrating(false);
     }
@@ -107,10 +126,16 @@ const Settings: React.FC = () => {
   return (
     // <RestaurantLayout>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <SettingSection title="Notifications" icon={<Bell size={20} />} index={0}>
+        <SettingSection
+          title="Notifications"
+          icon={<Bell size={20} />}
+          index={0}
+        >
           <ToggleSwitch
             enabled={notifications.predictionsCompleted}
-            onChange={() => toggleNotification("predictionsCompleted")}
+            onChange={() =>
+              toggleNotification("predictionsCompleted")
+            }
             label="Notify when predictions are completed"
           />
           <ToggleSwitch
@@ -125,12 +150,18 @@ const Settings: React.FC = () => {
           />
           <ToggleSwitch
             enabled={notifications.marketingEmails}
-            onChange={() => toggleNotification("marketingEmails")}
+            onChange={() =>
+              toggleNotification("marketingEmails")
+            }
             label="Marketing emails and offers"
           />
         </SettingSection>
 
-        <SettingSection title="AI Model" icon={<BarChart3 size={20} />} index={1}>
+        <SettingSection
+          title="AI Model"
+          icon={<BarChart3 size={20} />}
+          index={1}
+        >
           <ToggleSwitch
             enabled={modelSettings.autoUpdateModel}
             onChange={() => toggleModelSetting("autoUpdateModel")}
@@ -146,6 +177,7 @@ const Settings: React.FC = () => {
             onChange={() => toggleModelSetting("saveIngredientData")}
             label="Save ingredient data for future predictions"
           />
+
           <div className="pt-2">
             <Button
               variant="solid"

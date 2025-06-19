@@ -28,29 +28,38 @@ const ChartSection: React.FC<{ className?: string }> = ({
   className = "",
 }) => {
   const [data, setData] = useState<SeriesPoint[]>([]);
-  // optional: if you want to display ε somewhere
   const [epsilon, setEpsilon] = useState<number | null>(null);
-
   const [viewMode, setViewMode] = useState<"weekly" | "monthly">("weekly");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Helper to attach JWT
+  const authHeader = () => ({
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+    },
+  });
 
   useEffect(() => {
-    (async () => {
-      try {
-        // 1) fetch actual series
-        const actualRes = await axios.get<Pick<SeriesPoint, "date" | "actual" | "actualEarning">[]>(
-          `/api/dataformodel/${viewMode}`
-        );
+    const fetchAll = async () => {
+      setLoading(true);
+      setError(null);
 
-        // 2) fetch predicted, note new response shape
+      try {
+        // 1) actual series
+        const actualRes = await axios.get<
+          Pick<SeriesPoint, "date" | "actual" | "actualEarning">[]
+        >(`/api/dataformodel/${viewMode}`, authHeader());
+
+        // 2) predicted series + ε
         const predRes = await axios.get<{
           epsilon: number;
           series: Pick<SeriesPoint, "date" | "predicted" | "predictedEarning">[];
-        }>(`/api/predicted/${viewMode}`);
+        }>(`/api/predicted/${viewMode}`, authHeader());
 
-        // store epsilon if you need it
         setEpsilon(predRes.data.epsilon);
 
-        // 3) build maps for merging
+        // build lookup maps
         const actualMap = Object.fromEntries(
           actualRes.data.map((d) => [
             d.date,
@@ -64,7 +73,7 @@ const ChartSection: React.FC<{ className?: string }> = ({
           ])
         );
 
-        // 4) collect all dates
+        // merge dates
         const allDates = Array.from(
           new Set([
             ...actualRes.data.map((d) => d.date),
@@ -72,7 +81,6 @@ const ChartSection: React.FC<{ className?: string }> = ({
           ])
         ).sort();
 
-        // 5) merge into one array
         const merged: SeriesPoint[] = allDates.map((date) => ({
           date,
           actual: actualMap[date]?.actual ?? 0,
@@ -81,18 +89,19 @@ const ChartSection: React.FC<{ className?: string }> = ({
           predictedEarning: predMap[date]?.predictedEarning ?? 0,
         }));
 
-        // 6) also overlay *today's* live data from /api/servings
-        const todayRes = await axios.get<{
-          totalPlates: number;
-          totalEarning: number;
-        }[]>("/api/servings");
+        // 3) overlay today's live servings
+        const todayRes = await axios.get<
+          { totalPlates: number; totalEarning: number }[]
+        >("/api/servings", authHeader());
         const today = new Date().toISOString().split("T")[0];
         const sumServings = todayRes.data.reduce(
           (sum, s) => sum + (s.totalPlates || 0),
           0
         );
         const sumEarning = parseFloat(
-          todayRes.data.reduce((sum, s) => sum + (s.totalEarning || 0), 0).toFixed(2)
+          todayRes.data
+            .reduce((sum, s) => sum + (s.totalEarning || 0), 0)
+            .toFixed(2)
         );
 
         const todayPoint: SeriesPoint = {
@@ -110,11 +119,15 @@ const ChartSection: React.FC<{ className?: string }> = ({
         setData(merged);
       } catch (err) {
         console.error("ChartSection fetch error:", err);
+        setError("Unable to load chart data. Please try again.");
+      } finally {
+        setLoading(false);
       }
-    })();
+    };
+
+    fetchAll();
   }, [viewMode]);
 
-  // same tooltip as before
   const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
     const getVal = (key: string) =>
@@ -138,6 +151,18 @@ const ChartSection: React.FC<{ className?: string }> = ({
     );
   };
 
+  if (loading) {
+    return (
+      <div className="py-8 text-center text-gray-500">Loading chart…</div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-8 text-center text-red-500">{error}</div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -151,10 +176,9 @@ const ChartSection: React.FC<{ className?: string }> = ({
             <h2 className="text-xl font-semibold text-gray-800">
               Servings & Earnings: Actual vs Predicted
             </h2>
-            {/* optional: display ε */}
             {epsilon !== null && (
               <p className="text-sm text-gray-500">
-                &epsilon; = {epsilon.toFixed(2)}
+                ε = {epsilon.toFixed(2)}
               </p>
             )}
           </div>
@@ -189,7 +213,11 @@ const ChartSection: React.FC<{ className?: string }> = ({
                 name="Predicted Servings"
                 stroke="#4ADE80"
               />
-              <Line dataKey="actual" name="Actual Servings" stroke="#16A34A" />
+              <Line
+                dataKey="actual"
+                name="Actual Servings"
+                stroke="#16A34A"
+              />
               <Line
                 dataKey="predictedEarning"
                 name="Predicted Earning"

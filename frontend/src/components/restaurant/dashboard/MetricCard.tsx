@@ -19,9 +19,9 @@ interface PredictedSummary {
   trainedAt: string;
   epsilon: number;
   dishes: string[];
-  q_values: { [dish: string]: number } | number[]; // if you're storing as object or array
+  q_values: { [dish: string]: number } | number[];
   counts: { [dish: string]: number } | number[];
-  best: string;      // the dish with highest q
+  best: string;
 }
 
 // Defines how each metric card will look
@@ -34,16 +34,15 @@ interface Metric {
 }
 
 const createMetrics = (summary: PredictedSummary): Metric[] => {
-  // Extract fields
   const { dishes, epsilon, best, q_values } = summary;
   const totalDishes = dishes.length;
 
-  // Compute average q-value
   const qArray = Array.isArray(q_values)
     ? (q_values as number[])
     : Object.values(q_values as Record<string, number>);
+
   const avgReward =
-    qArray.reduce((sum, v) => sum + v, 0) / qArray.length || 0;
+    qArray.reduce((sum, v) => sum + v, 0) / (qArray.length || 1);
 
   return [
     {
@@ -64,9 +63,7 @@ const createMetrics = (summary: PredictedSummary): Metric[] => {
       id: "bestValue",
       name: `Best Dish: ${best}`,
       Icon: TrendingUp,
-      value: parseFloat(
-        (Math.max(...qArray) || 0).toFixed(2)
-      ),
+      value: parseFloat(Math.max(...qArray || [0]).toFixed(2)),
       unit: "",
     },
     {
@@ -82,17 +79,25 @@ const createMetrics = (summary: PredictedSummary): Metric[] => {
 const MetricCard: React.FC = () => {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Helper to pull the token and set the header
+  const authHeader = () => ({
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+    },
+  });
 
   useEffect(() => {
-    // Fetch the summary from backend
+    setLoading(true);
     axios
-      .get<PredictedSummary>("/api/model/summary")
+      .get<PredictedSummary>("/api/model/summary", authHeader())
       .then((res) => {
-        const summary = res.data;
-        setMetrics(createMetrics(summary));
+        setMetrics(createMetrics(res.data));
       })
       .catch((err) => {
         console.error("Failed to load model summary:", err);
+        setError("Could not load metrics. Please try again.");
       })
       .finally(() => {
         setLoading(false);
@@ -107,48 +112,51 @@ const MetricCard: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="py-8 text-center text-red-500">
+        {error}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {metrics.map((m, idx) => {
+      {metrics.map((metric, idx) => {
         const bgShade = idx % 2 === 0 ? "bg-gray-100" : "bg-gray-200";
+        const Icon = metric.Icon;
 
         return (
           <motion.div
-            key={m.id}
+            key={metric.id}
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }}
           >
-            <Card
-              className={`${bgShade} flex flex-col justify-between p-5`}
-              glow={false}
-            >
+            <Card className={`${bgShade} flex flex-col justify-between p-5`} glow={false}>
               {/* Icon + Name */}
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-3">
                   <motion.div
-                    whileHover={{
-                      rotate: 360,
-                      transition: { duration: 1 },
-                    }}
+                    whileHover={{ rotate: 360, transition: { duration: 1 } }}
                     className="rounded-lg bg-green-100 p-2 text-green-600"
                   >
-                    <m.Icon size={18} />
+                    <Icon size={18} />
                   </motion.div>
-                  <h3 className="text-gray-800 font-medium">{m.name}</h3>
+                  <h3 className="text-gray-800 font-medium">{metric.name}</h3>
                 </div>
               </div>
 
               {/* Value */}
               <div className="mt-2 flex items-baseline">
                 <GlowingText
-                  text={m.value}
+                  text={metric.value}
                   variant="green"
                   hasCountUp
                   decimals={2}
                   className="text-2xl font-bold text-gray-900"
                 />
-                {m.unit && <span className="ml-1 text-gray-700">{m.unit}</span>}
+                {metric.unit && <span className="ml-1 text-gray-700">{metric.unit}</span>}
               </div>
             </Card>
           </motion.div>
