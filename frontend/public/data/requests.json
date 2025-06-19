@@ -24,6 +24,15 @@
     "estimatedValue": "10000",
     "pickupStartTime": "15:00",
     "pickupEndTime": "20:00",
-    "status": "booked"
+    "status": "accepted"
+  },
+  {
+    "id": "1750333607939",
+    "name": "for you",
+    "quantity": "3",
+    "estimatedValue": "93",
+    "pickupStartTime": "14:03",
+    "pickupEndTime": "20:00",
+    "status": "rejected"
   }
 ]

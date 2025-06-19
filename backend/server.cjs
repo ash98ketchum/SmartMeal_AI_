@@ -119,15 +119,34 @@ app.get('/api/model/summary', requireAuth, (req, res) => {
 });
 
 app.post('/api/model/recalibrate', requireAuth, (req, res) => {
-  try {
-    const summary = readSummary('predicted');
-    summary.lastCalibrated = new Date().toISOString();
-    syncJson('predicted', summary);
-    res.json(summary);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to recalibrate model' });
-  }
+  // kick off your Python training script
+  exec(
+    `${PYTHON_CMD} train_model.py --episodes=200`,
+    { cwd: __dirname },
+    (err, stdout, stderr) => {
+      if (err) {
+        console.error('⛔ Model training failed:', stderr);
+        return res.status(500).json({
+          error: 'Model training failed',
+          details: stderr.slice(0, 200)  // first 200 chars
+        });
+      }
+
+      // once training is done, read the newly‐written predicted.json
+      try {
+        const summary = readSummary('predicted');
+        summary.lastCalibrated = new Date().toISOString();
+        // persist that timestamp if you like
+        syncJson('predicted', summary);
+        return res.json(summary);
+      } catch (e) {
+        console.error('⛔ Failed to load new summary:', e);
+        return res.status(500).json({
+          error: 'Failed to load model summary after training'
+        });
+      }
+    }
+  );
 });
 
 // ── Time-series helpers ────────────────────────────────────────────────────────
@@ -377,7 +396,7 @@ app.post('/api/reset', requireAuth, (req, res) => {
 });
 
 // ── History from predicted.json ──────────────────────────────────────────────
-app.get('/api/predictions', requireAuth, (req, res) => {
+app.get('/api/predictions', (req, res) => {
   try {
     const data    = readJson(dataPath('predicted'), {});
     const dishes  = Array.isArray(data.dishes) ? data.dishes : [];
@@ -398,7 +417,19 @@ app.get('/api/predictions', requireAuth, (req, res) => {
     res.status(500).json({ error: 'Failed to load predictions' });
   }
 });
+// --------------------------History from requests.json----------------------------
+app.get('/api/requests', (req, res) => {
+  try {
+    const file = dataPath('requests'); // should point to requests.json
+    const data = readJson(file);
+    res.json(data);
+  } catch (err) {
+    console.error('Error reading requests.json:', err);
+    res.status(500).json({ error: 'Failed to load requests data' });
+  }
+});
 
+// ---------------------------------------------------------------------------
 // ── Events endpoints ───────────────────────────────────────────────────────────
 app.get('/api/events', requireAuth, (req, res) => {
   const all      = readJson(dataPath('events'), []);

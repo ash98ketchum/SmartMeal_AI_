@@ -90,6 +90,17 @@
         "platesWasted": 3,
         "totalEarning": 163.33,
         "remark": "khathi meethi "
+      },
+      {
+        "id": "1750326861388",
+        "date": "2025-06-19",
+        "name": "Samosa",
+        "costPerPlate": 45,
+        "totalIngredientsCost": 500,
+        "totalPlates": 45,
+        "platesWasted": 3,
+        "totalEarning": 1423.33,
+        "remark": "khatta meetha"
       }
     ]
   }
