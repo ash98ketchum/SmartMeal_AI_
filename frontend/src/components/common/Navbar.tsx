@@ -37,7 +37,7 @@ const Navbar: React.FC = () => {
           <div className="hidden items-center space-x-8 md:flex">
             {[
               { href: "/", label: "Home" },
-              { href: "/food-details", label: "Available Food" },
+              // { href: "/food-details", label: "Available Food" },
               { href: "/reviews", label: "Reviews" },
               { href: "/faq", label: "FAQs" },
             ].map(({ href, label }) => (

@@ -149,7 +149,19 @@ app.post('/api/model/recalibrate', requireAuth, (req, res) => {
     }
   );
 });
-
+// --------------------------count of ngo, rest------------------------------------
+app.get('/api/stats/users', async (req, res) => {
+  try {
+    const [ngoCount, restaurantCount] = await Promise.all([
+      prisma.user.count({ where: { role: 'NGO' } }),
+      prisma.user.count({ where: { role: 'RESTAURANT' } })
+    ]);
+    res.json({ ngos: ngoCount, restaurants: restaurantCount });
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
 // ── Time-series helpers ────────────────────────────────────────────────────────
 function getSeries(period) {
   const all = readJson(dataPath('modelData'));

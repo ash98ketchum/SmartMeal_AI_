@@ -1,5 +1,5 @@
 // frontend/src/pages/public/Landing.tsx
-import React from "react";
+import React, {  useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Footer from "@/components/common/Footer";
@@ -13,36 +13,43 @@ import {
   MapPin,
 } from "lucide-react";
 
-/* ------------------------------------------------------------------ */
-/*                         Static demo data                           */
-/* ------------------------------------------------------------------ */
+const Landing: React.FC = () => {
+  const navigate = useNavigate();
+  const [userStats, setUserStats] = useState({ ngos: 0, restaurants: 0 });
 
-const stats = [
-  {
-    label: "Meals Donated",
-    value: "125,847",
-    Icon: Utensils,
-    color: "text-green-600",
-  },
-  {
-    label: "Food Saved (lbs)",
-    value: "89,432",
-    Icon: Heart,
-    color: "text-orange-600",
-  },
-  {
-    label: "Active NGOs",
-    value: "234",
-    Icon: Users,
-    color: "text-blue-600",
-  },
-  {
-    label: "Partner Restaurants",
-    value: "456",
-    Icon: TrendingUp,
-    color: "text-purple-600",
-  },
-] as const;
+ useEffect(() => {
+    fetch('/api/stats/users')
+      .then(res => res.json())
+      .then(data => setUserStats(data))
+      .catch(err => console.error("Error loading stats:", err));
+  }, []);
+
+  const stats = [
+    {
+      label: "Meals Donated",
+      value: "125,847", // TODO: replace with backend count later
+      Icon: Utensils,
+      color: "text-green-600",
+    },
+    {
+      label: "Food Saved (lbs)",
+      value: "89,432", // TODO: replace with backend count later
+      Icon: Heart,
+      color: "text-orange-600",
+    },
+    {
+      label: "Active NGOs",
+      value: userStats.ngos.toLocaleString(),
+      Icon: Users,
+      color: "text-blue-600",
+    },
+    {
+      label: "Active Restaurants",
+      value: userStats.restaurants.toLocaleString(),
+      Icon: TrendingUp,
+      color: "text-purple-600",
+    },
+  ] as const;
 
 const steps = [
   {
@@ -70,8 +77,6 @@ const steps = [
 
 /* ------------------------------------------------------------------ */
 
-const Landing: React.FC = () => {
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen">
