@@ -1,152 +1,176 @@
-# SmartMeal AI
+# 🧠🍽️ SmartMeal AI
 
-SmartMeal AI is a responsive web app that connects restaurants and NGOs to rescue surplus food and nourish communities. Visitors can browse public pages (Landing, Food Details, Reviews, FAQ), sign in as an NGO or Restaurant, and—once authenticated—restaurants can manage their dashboard, enter daily servings, schedule events, tweak settings, and view serving history.
+**SmartMeal AI** is a responsive, intelligent web app that bridges the gap between surplus food and hunger by connecting **restaurants** with **NGOs**. Using real-time dashboards, food availability tracking, and AI-powered predictions, the platform aims to **rescue edible food** and **nourish communities**.
 
 ---
 
 ## 🚀 Tech Stack
 
-- **Framework:** React + Vite
-- **Language:** TypeScript
-- **Routing:** React Router v6
-- **Animation:** Framer Motion
-- **Icons:** Lucide React
-- **HTTP:** Axios
-- **Styling:** Tailwind CSS
-- **State & Forms:** React Hooks (`useState`, `useEffect`)
+- **Framework**: React + Vite  
+- **Language**: TypeScript  
+- **Routing**: React Router v6  
+- **Styling**: Tailwind CSS  
+- **Animations**: Framer Motion  
+- **Icons**: Lucide React  
+- **State & Forms**: React Hooks (useState, useEffect)  
+- **HTTP Client**: Axios  
+- **Backend**: Node.js, Express.js  
+- **Database**: Prisma ORM with SQLite  
+- **Auth**: JWT (Stubbed for now)
+
+---
+
+## 🧩 Features
+
+### 🏠 Public Pages
+- ✅ Landing Page (Mission, Counters, How it Works)
+- ✅ Food Details (Available rescued food overview)
+- ✅ Reviews (Testimonials carousel)
+- ✅ FAQs
+
+### 🧑‍🍳 Restaurant Dashboard
+- 🍽️ Upload food details with quantity & freshness
+- 📊 Recalibration button: Instant AI model prediction
+- 🧾 Track total plates served, servings added
+- 📅 Upcoming 5 Events section with real-time preview
+- ⚙️ Settings & Profile customization
+- 🧠 View history: earnings, waste reduction, net savings
+
+### 🏥 NGO Dashboard
+- 📦 See all available food items across restaurants
+- 📩 Send food requests to restaurants
+- 💬 Send feedback after receiving food
+- 🔄 NGO activity summary on main dashboard
 
 ---
 
 ## 📁 File Structure
 
-```
 frontend/
 └── src/
-    ├── App.tsx
-    ├── index.tsx
-    ├── layouts/
-    │   ├── MainLayout.tsx         # Public‐site wrapper (Navbar, Footer, etc.)
-    │   └── RestaurantLayout.tsx   # Restaurant area wrapper (animated bg, floating icons, Outlet)
-    │
-    ├── pages/
-    │   ├── public/
-    │   │   ├── Landing.tsx        # Hero, mission, “How It Helps”, plate counter
-    │   │   ├── FoodDetails.tsx    # Details on a specific rescued‐food offer
-    │   │   ├── Reviews.tsx        # Testimonials / feedback carousel
-    │   │   └── FAQ.tsx            # Frequently Asked Questions
-    │   │
-    │   ├── authentication/
-    │   │   ├── SigninNGO.tsx      # NGO sign‐in placeholder
-    │   │   └── SigninRestaurant.tsx  # Restaurant sign‐in placeholder
-    │   │
-    │   └── restaurant/
-    │       ├── Dashboard.tsx      # Overview: total plates saved, active events, quick links
-    │       ├── TodaysServing.tsx  # Form + summary cards for daily serving data
-    │       ├── Events.tsx         # CRUD UI for upcoming events
-    │       ├── Settings.tsx       # Profile / preferences page
-    │       ├── History.tsx        # Past‐days’ summary (earnings, waste, net savings)
-    │       └── RestaurantFAQ.tsx  # (future) Restaurant‐specific FAQs
-    │
-    ├── components/
-    │   ├── common/
-    │   │   ├── Footer.tsx             # Global footer
-    │   │   └── FloatingFoodIcons.tsx  # Background “floating” SVG icons
-    │   │
-    │   ├── restaurant/
-    │   │   └── Navbar.tsx             # Restaurant‐area responsive navbar + mobile drawer
-    │   │
-    │   └── ui/
-    │       ├── Button.tsx             # Styled button variants (solid, outline)
-    │       └── Card.tsx               # Simple card container with optional glow
-    │
-    └── styles/
-        └── index.css              # Tailwind base + custom utilities
-```
+├── App.tsx
+├── index.tsx
+├── layouts/
+│ ├── MainLayout.tsx
+│ └── RestaurantLayout.tsx
+├── pages/
+│ ├── public/
+│ │ ├── Landing.tsx
+│ │ ├── FoodDetails.tsx
+│ │ ├── Reviews.tsx
+│ │ └── FAQ.tsx
+│ ├── authentication/
+│ │ ├── SigninNGO.tsx
+│ │ └── SigninRestaurant.tsx
+│ └── restaurant/
+│ ├── Dashboard.tsx
+│ ├── TodaysServing.tsx
+│ ├── Events.tsx
+│ ├── Settings.tsx
+│ ├── History.tsx
+│ └── RestaurantFAQ.tsx
+├── components/
+│ ├── common/
+│ │ ├── Footer.tsx
+│ │ └── FloatingFoodIcons.tsx
+│ ├── restaurant/
+│ │ └── Navbar.tsx
+│ └── ui/
+│ ├── Button.tsx
+│ └── Card.tsx
+└── styles/
+└── index.css
+
+yaml
+Copy
+Edit
 
 ---
 
-## 🔄 Workflow
+## 🔄 App Workflow
 
-1. **Public Browsing**  
-   - Users land on `/` (Landing).  
-   - Navigate to `/food-details`, `/reviews`, or `/faq` via the main navbar (wrapped in `MainLayout`).
+### 🌐 Public Browsing
+- Landing `/`
+- `/food-details`, `/reviews`, `/faq`
 
-2. **Authentication**  
-   - NGO users go to `/signin/ngo`; restaurants to `/signin/restaurant`.  
-   - (Auth stubs for now—future integration with real backend.)
+### 🔐 Authentication
+- NGO: `/signin/ngo`
+- Restaurant: `/signin/restaurant`  
+(Auth is stubbed; backend planned)
 
-3. **Restaurant Portal**  
-   - After “sign-in” (stub), users land on `/restaurant`, which renders `RestaurantLayout`.  
-   - `RestaurantLayout` provides:
-     - Animated gradient background (Framer Motion).
-     - Floating food icons.
-     - `RestaurantNavbar` with links to Dashboard, Serving, Events, Settings, History.
-     - `<Outlet />` where child routes render.
-     - Global footer.
+### 🧑‍🍳 Restaurant Portal (after login)
+- Animated layout (Framer Motion)
+- Navbar: Dashboard, Serving, Events, Settings, History
+- Dashboard: Quick stats, events, NGO request overview
+- Todays Serving: Add/Delete daily food served
+- Events: Add/Delete upcoming distribution events
+- History: Past-day summaries
+- Recalibration button to trigger AI instantly
 
-4. **Managing Servings**  
-   - `/restaurant/serving` → `TodaysServing.tsx`:  
-     - Fetches `GET /api/servings`, displays summary cards (Total Earnings, Food Waste, Net Savings).  
-     - Shows existing servings in cards with delete buttons.  
-     - “Add Serving” form posts to `POST /api/servings`, then refetches.
-
-5. **Managing Events**  
-   - `/restaurant/events` → `Events.tsx`:  
-     - Fetches `GET /api/events`, lists upcoming events in cards with delete.  
-     - “Add New Event” form posts to `POST /api/events`.
-
-6. **Settings & FAQ**  
-   - `/restaurant/settings` → `Settings.tsx` (profile, preferences).  
-   - `/restaurant/faq` → `RestaurantFAQ.tsx` (future).
-
-7. **Viewing History**  
-   - `/restaurant/history` → `History.tsx`:  
-     - Fetches `GET /api/history`, shows past days’ summaries (earnings, waste, net).
+### 🏥 NGO Dashboard (upcoming)
+- Browse available food
+- Request from restaurants
+- Provide post-delivery feedback
+- Dashboard showing NGO activity & request status
 
 ---
 
-## 🛠️ Running Locally
+## 🛠 Run Locally
 
-1. **Install dependencies**  
-   ```bash
-   cd frontend
-   npm install
-   ```
+```bash
+git clone https://github.com/your-username/smartmeal-ai.git
+cd frontend
+npm install
+npm run dev
+Make sure your backend is running at the same origin or proxied.
 
-2. **Start dev server**  
-   ```bash
-   npm run dev
-   ```
+🧪 API Endpoints
+bash
+Copy
+Edit
+GET     /api/servings
+POST    /api/servings
+DELETE  /api/servings/:name
 
-3. **API end-points** (assumed running on the same origin or proxied):  
-   - `GET /api/servings`  
-   - `POST /api/servings`  
-   - `DELETE /api/servings/:name`  
-   - `POST /api/archive`  
-   - `GET /api/events`  
-   - `POST /api/events`  
-   - `DELETE /api/events/:id`  
-   - `GET /api/history`
+GET     /api/events
+POST    /api/events
+DELETE  /api/events/:id
 
----
+POST    /api/archive
+GET     /api/history
+🗂 Developer Tips
+🧾 Check user count in DB:
 
-## 📈 Next Steps
+bash
+Copy
+Edit
+node -e "const { PrismaClient } = require('@prisma/client'); const db=new PrismaClient(); db.user.count().then(c => console.log('Users:', c))"
+🔍 Explore data:
 
-- Integrate real authentication & authorization.  
-- Hook up to a production-ready backend (Node/Express, Flask, etc.).  
-- Flesh out Restaurant FAQ and Settings pages.  
-- Add error boundaries, loading spinners, and form validation.  
-- Deploy via Vercel/Netlify and configure environment variables.
-- Restaurant Dashboard mei NGO wala section jaha pr NGO ki request and response handler wala section banana h
-- Jese main page ka review h vesa NGO wala banana h 
-- main dashboard se available food hatake ab tk ngo and restaurant ne kya kiya vo sb ayega 
+bash
+Copy
+Edit
+npx prisma studio
+🔐 JWT Secret (local):
 
-
-Database :
-check number of users 
-node -e "const { PrismaClient } = require('@prisma/client'); const db=new PrismaClient(); db.user.count().then(c => console.log('Users:',c))"
-
+ini
+Copy
+Edit
 JWT_SECRET='4f8d2a3e9b7c1d5f6a4e3c2b1f9d8a7c4e6f2b9a8d7c1e3f6b4a5c2d7e9f8a3d'
+📈 Future Enhancements
+🔐 Real authentication & session management
 
-to see user data table:  npx prisma studio
----
+⚙️ NGO dashboard improvements
+
+📊 Advanced analytics for food saved and lives served
+
+🧾 Real-time request logs (NGO <--> Restaurant)
+
+📦 Admin role to monitor ecosystem
+
+🌍 Deployment on Vercel/Netlify
+
+🧪 Add form validation, spinners, error boundaries
+
+🏁 Deployment Preview
+Coming soon via Netlify or Vercel. Stay tuned!
