@@ -155,13 +155,43 @@ app.get('/api/stats/users', async (req, res) => {
     const [ngoCount, restaurantCount] = await Promise.all([
       prisma.user.count({ where: { role: 'NGO' } }),
       prisma.user.count({ where: { role: 'RESTAURANT' } })
-    ]);
-    res.json({ ngos: ngoCount, restaurants: restaurantCount });
-  } catch (error) {
-    console.error("Error fetching user stats:", error);
-    res.status(500).json({ error: 'Failed to fetch stats' });
+    ])
+    const allReqs = readJson(dataPath('requests'), [])
+    const accepted = allReqs.filter(r => r.status === 'accepted')
+    const mealsDonated = accepted.length
+    const foodSaved = accepted.reduce((sum, r) => sum + parseInt(r.quantity, 10), 0)
+    res.json({ ngos: ngoCount, restaurants: restaurantCount, mealsDonated, foodSaved })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load stats' })
   }
-});
+})
+
+
+// ---------------------dashboard summary stats---------------------
+app.get('/api/stats/dashboard', async (req, res) => {
+  try {
+    const activePartners = await prisma.user.count({
+      where: { role: 'RESTAURANT' }
+    })
+
+    const allReqs = readJson(dataPath('requests'), [])
+
+    const upcomingPickups = allReqs.filter(r => r.status === 'pending').length
+
+    const requestsFulfilled = allReqs.filter(r => r.status === 'accepted').length
+
+    const totalFoodSaved = allReqs
+      .filter(r => r.status === 'accepted')
+      .reduce((sum, r) => sum + (r.quantity ? parseInt(r.quantity, 10) : 0), 0)
+
+    res.json({ activePartners, upcomingPickups, requestsFulfilled, totalFoodSaved })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Could not load dashboard stats' })
+  }
+})
+
+
 // ── Time-series helpers ────────────────────────────────────────────────────────
 function getSeries(period) {
   const all = readJson(dataPath('modelData'));
@@ -487,7 +517,75 @@ cron.schedule('0 0 * * *', () => {
     console.error('Cron job failed', e);
   }
 });
+// ── Partnership requests ──────────────────────────────────────────────────────
+app.post('/api/partnership-requests', requireAuth, async (req, res) => {
+  const { restaurantId } = req.body;
+  const ngoId = req.user.userId;
 
+  const existing = await prisma.partnershipRequest.findFirst({
+    where: { ngoId, restaurantId }
+  });
+  if (existing) return res.status(409).json({ error: 'Already requested.' });
+
+  const request = await prisma.partnershipRequest.create({
+    data: { ngoId, restaurantId }
+  });
+  res.json(request);
+});
+
+app.get('/api/partnership-requests/outgoing', requireAuth, async (req, res) => {
+  const ngoId = req.user.userId;
+  const requests = await prisma.partnershipRequest.findMany({
+    where: { ngoId },
+    include: { restaurant: true }
+  });
+  res.json(requests);
+});
+
+app.get(
+  '/api/restaurants',
+  requireAuth,
+  async (req, res) => {
+    try {
+      // 1) fetch only the columns you’ve defined in schema.prisma
+      const raw = await prisma.user.findMany({
+        where: { role: 'RESTAURANT' },
+        select: {
+          id:             true,
+          restaurantName: true,
+          email:          true,
+          gstNumber:      true,
+          createdAt:      true,
+          updatedAt:      true
+        }
+      });
+
+      // 2) map into the shape your front-end expects
+      const list = raw.map(r => ({
+        id:             r.id,
+        name:           r.restaurantName,
+        email:          r.email,
+        gstNumber:      r.gstNumber || '',
+        joinedDate:     r.createdAt.toISOString(),
+        // everything else is still mock/default:
+        address:        '',
+        phone:          '',
+        cuisine:        '',
+        status:         'Active',
+        lastPickup:     '-',
+        totalDonations: 0,
+        totalPickups:   0,
+        rating:         0,
+        reliability:    0
+      }));
+
+      return res.json(list);
+    } catch (err) {
+      console.error('Failed to load restaurants', err);
+      return res.status(500).json({ error: 'Unable to fetch restaurants' });
+    }
+  }
+);
 // ── Static files & SPA fallback ────────────────────────────────────────────────
 app.use('/data', express.static(FRONTEND_DATA_DIR));
 const FRONTEND_BUILD = path.join(__dirname, '../frontend/dist');
