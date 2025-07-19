@@ -1,8 +1,8 @@
 [
   {
-    "name": "Her............",
-    "description": "MINEEE DONT LOOK AT HER",
-    "quantity": "10000",
+    "name": "Rajma Chawal",
+    "description": "1Kg left, made in the morning",
+    "quantity": "5",
     "pickupStartTime": "00:00",
     "pickupEndTime": "10:00",
     "estimatedValue": "6969",
@@ -19,9 +19,9 @@
     "reservedAt": "2025-06-18T19:32:15.039Z"
   },
   {
-    "name": "MY GF(Not at the time of pic)",
-    "description": "Feels bad fr fr",
-    "quantity": "1",
+    "name": "Pao Bhaaji",
+    "description": "20 plates left",
+    "quantity": "20",
     "pickupStartTime": "00:00",
     "pickupEndTime": "10:00",
     "estimatedValue": "100",
@@ -36,9 +36,9 @@
     "reservedAt": "2025-06-18T19:39:13.946Z"
   },
   {
-    "name": "Cheese",
-    "description": "MYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
-    "quantity": "100",
+    "name": "Daal Chawal",
+    "description": "Made in the afternoon",
+    "quantity": "10",
     "pickupStartTime": "00:00",
     "pickupEndTime": "10:00",
     "estimatedValue": "69420",
@@ -53,16 +53,15 @@
     "reservedAt": "2025-06-18T20:03:12.737Z"
   },
   {
-    "name": "MY girl",
-    "description": "ONLY MY GIRL",
-    "quantity": "1",
+    "name": "Idli sambhar",
+    "description": "Fresh",
+    "quantity": "20",
     "pickupStartTime": "08:00",
     "pickupEndTime": "12:00",
     "estimatedValue": "100",
     "dietaryTags": [
       "Spicy",
       "High Protein",
-      "Low Carb",
       "Vegetarian",
       "Fresh"
     ],
@@ -74,9 +73,9 @@
     "reservedAt": "2025-06-19T02:49:38.715Z"
   },
   {
-    "name": "MY GIRL................",
-    "description": "DONT LOOK ABEEEE MOVE UR EYES BITCH",
-    "quantity": "1",
+    "name": "Khichdi",
+    "description": "30 plates left, made in the morning",
+    "quantity": "30",
     "pickupStartTime": "15:00",
     "pickupEndTime": "20:00",
     "estimatedValue": "10000",
@@ -92,9 +91,9 @@
     "reservedAt": "2025-06-19T09:34:37.774Z"
   },
   {
-    "name": "for you",
-    "description": "she is sweet kinda",
-    "quantity": "3",
+    "name": "Biryani",
+    "description": "10 plates left",
+    "quantity": "10",
     "pickupStartTime": "14:03",
     "pickupEndTime": "20:00",
     "estimatedValue": "93",
@@ -110,9 +109,9 @@
     "reservedAt": "2025-06-19T11:47:27.318Z"
   },
   {
-    "name": "Rajma Chawal",
-    "description": "Tasty Tasty",
-    "quantity": "10",
+    "name": "Khadi Chawal",
+    "description": "Fresh",
+    "quantity": "20",
     "pickupStartTime": "06:50",
     "pickupEndTime": "23:50",
     "estimatedValue": "197",

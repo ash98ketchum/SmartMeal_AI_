@@ -10,17 +10,17 @@
   },
   {
     "id": "1750301352702",
-    "name": "MY girl",
+    "name": "khadi chawal",
     "quantity": "1",
-    "estimatedValue": "100",
+    "estimatedValue": "150",
     "pickupStartTime": "08:00",
     "pickupEndTime": "12:00",
     "status": "accepted"
   },
   {
     "id": "1750325629315",
-    "name": "MY GIRL................",
-    "quantity": "1",
+    "name": "aalo ki sabzi",
+    "quantity": "100",
     "estimatedValue": "10000",
     "pickupStartTime": "15:00",
     "pickupEndTime": "20:00",
@@ -28,8 +28,8 @@
   },
   {
     "id": "1750333607939",
-    "name": "for you",
-    "quantity": "3",
+    "name": "daal chawal",
+    "quantity": "200",
     "estimatedValue": "93",
     "pickupStartTime": "14:03",
     "pickupEndTime": "20:00",
@@ -37,8 +37,8 @@
   },
   {
     "id": "1752679030290",
-    "name": "Rajma Chawal",
-    "quantity": "10",
+    "name": "matar paneer",
+    "quantity": "80",
     "estimatedValue": "197",
     "pickupStartTime": "06:50",
     "pickupEndTime": "23:50",
