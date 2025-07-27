@@ -239,5 +239,30 @@
         "totalEarning": 173.33
       }
     ]
+  },
+  {
+    "date": "2025-07-25",
+    "items": [
+      {
+        "id": "1753459039001",
+        "date": "2025-07-25",
+        "name": "Aloo Paratha",
+        "costPerPlate": 28,
+        "totalIngredientsCost": 343,
+        "totalPlates": 23,
+        "platesWasted": 2,
+        "totalEarning": 274.83
+      },
+      {
+        "id": "1753459628262",
+        "date": "2025-07-25",
+        "name": "Masala Dosa",
+        "costPerPlate": 15,
+        "totalIngredientsCost": 300,
+        "totalPlates": 35,
+        "platesWasted": 5,
+        "totalEarning": 192.86
+      }
+    ]
   }
 ]

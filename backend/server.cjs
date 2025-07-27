@@ -586,6 +586,43 @@ app.get(
     }
   }
 );
+
+// ── Groq Chat API ─────────────────────────────────────────────────────────────
+const Groq = require("groq-sdk");
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+const SMARTMEAL_PROMPT = `
+You are SmartMeal AI, the official assistant of the SmartMeal project.
+SmartMeal AI connects restaurants with NGOs to reduce food waste and help communities.
+Your tasks:
+1. If asked to "upload today's serving", fetch /data/todaysservings.json and POST to /api/food.
+2. Provide quick summaries of today's serving, food waste, and earnings.
+3. Help with NGO-related tasks and SmartMeal system features.
+If unrelated questions are asked, politely respond with:
+"I'm SmartMeal AI and can only assist with SmartMeal-related tasks."
+Always confirm before performing any action that modifies or uploads data.
+Be friendly, professional, and focus only on SmartMeal-related automation.
+`;
+
+app.post("/api/chat", async (req, res) => {
+  try {
+    const { messages } = req.body;
+    const completion = await groq.chat.completions.create({
+      model: "llama3-8b-8192",
+      messages: [
+        { role: "system", content: SMARTMEAL_PROMPT },
+        ...messages
+      ],
+    });
+    res.json({ reply: completion.choices[0]?.message?.content || "No response" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Groq API request failed" });
+  }
+});
+
+
+
 // ── Static files & SPA fallback ────────────────────────────────────────────────
 app.use('/data', express.static(FRONTEND_DATA_DIR));
 const FRONTEND_BUILD = path.join(__dirname, '../frontend/dist');
