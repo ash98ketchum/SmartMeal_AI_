@@ -624,12 +624,12 @@ app.post("/api/chat", async (req, res) => {
 
 
 // ── Static files & SPA fallback ────────────────────────────────────────────────
-app.use('/data', express.static(FRONTEND_DATA_DIR));
-const FRONTEND_BUILD = path.join(__dirname, '../frontend/dist');
-app.use(express.static(FRONTEND_BUILD));
-app.get('*', (_, res) => {
-  res.sendFile(path.join(FRONTEND_BUILD, 'index.html'));
-});
+// app.use('/data', express.static(FRONTEND_DATA_DIR));
+// const FRONTEND_BUILD = path.join(__dirname, '../frontend/dist');
+// app.use(express.static(FRONTEND_BUILD));
+// app.get('*', (_, res) => {
+//   res.sendFile(path.join(FRONTEND_BUILD, 'index.html'));
+// });
 
 // ── Start server ───────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
