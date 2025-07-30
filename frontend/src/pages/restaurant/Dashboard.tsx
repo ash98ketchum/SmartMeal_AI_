@@ -1,7 +1,7 @@
 // src/pages/restaurant/Dashboard.tsx
 
 import React, { useState } from "react";
-import FilterBar from "@/components/restaurant/dashboard/FilterBar";
+// import FilterBar from "@/components/restaurant/dashboard/FilterBar";
 import MetricCard from "@/components/restaurant/dashboard/MetricCard";
 import ChartSection from "@/components/restaurant/dashboard/ChartSection";
 import EventsList from "@/components/restaurant/dashboard/EventsList";
@@ -13,7 +13,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-12">
       {/* Filter Bar */}
-      <FilterBar onFilterChange={(f) => setFilters(f)} className="mb-6" />
+      {/* <FilterBar onFilterChange={(f) => setFilters(f)} className="mb-6" /> */}
 
       {/* Top metrics */}
       <MetricCard />
