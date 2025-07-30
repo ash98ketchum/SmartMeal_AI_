@@ -1,5 +1,4 @@
 // frontend/src/components/restaurant/dashboard/MetricCard.tsx
-
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -14,7 +13,6 @@ import axios from "axios";
 import Card from "@/components/ui/Card";
 import GlowingText from "@/components/ui/GlowingText";
 
-// This shape matches what the backend writes to predicted.json
 interface PredictedSummary {
   trainedAt: string;
   epsilon: number;
@@ -24,7 +22,6 @@ interface PredictedSummary {
   best: string;
 }
 
-// Defines how each metric card will look
 interface Metric {
   id: string;
   name: string;
@@ -34,12 +31,13 @@ interface Metric {
 }
 
 const createMetrics = (summary: PredictedSummary): Metric[] => {
-  const { dishes, epsilon, best, q_values } = summary;
-  const totalDishes = dishes.length;
+  if (!summary || !summary.q_values) return [];
+
+  const { dishes = [], epsilon = 0, best = "", q_values } = summary;
 
   const qArray = Array.isArray(q_values)
-    ? (q_values as number[])
-    : Object.values(q_values as Record<string, number>);
+    ? q_values
+    : Object.values(q_values || {});
 
   const avgReward =
     qArray.reduce((sum, v) => sum + v, 0) / (qArray.length || 1);
@@ -56,12 +54,12 @@ const createMetrics = (summary: PredictedSummary): Metric[] => {
       id: "totalDishes",
       name: "Total Dishes",
       Icon: DollarSign,
-      value: totalDishes,
+      value: dishes.length || 0,
       unit: "",
     },
     {
       id: "bestValue",
-      name: `Best Dish: ${best}`,
+      name: `Best Dish: ${best || "N/A"}`,
       Icon: TrendingUp,
       value: parseFloat(Math.max(...qArray || [0]).toFixed(2)),
       unit: "",
@@ -81,7 +79,6 @@ const MetricCard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper to pull the token and set the header
   const authHeader = () => ({
     headers: {
       Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -90,10 +87,11 @@ const MetricCard: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    axios
-      .get<PredictedSummary>("/api/model/summary", authHeader())
+   axios.get<PredictedSummary>(`${import.meta.env.VITE_API_URL}/model/summary`, authHeader())
+
       .then((res) => {
-        setMetrics(createMetrics(res.data));
+        const metrics = createMetrics(res.data);
+        setMetrics(metrics);
       })
       .catch((err) => {
         console.error("Failed to load model summary:", err);
@@ -104,41 +102,27 @@ const MetricCard: React.FC = () => {
       });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="py-8 text-center text-gray-500">
-        Loading metrics...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-8 text-center text-red-500">
-        {error}
-      </div>
-    );
-  }
+  if (loading) return <div className="py-8 text-center text-gray-500">Loading metrics...</div>;
+  if (error) return <div className="py-8 text-center text-red-500">{error}</div>;
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric, idx) => {
-        const bgShade = idx % 2 === 0 ? "bg-gray-100" : "bg-gray-200";
         const Icon = metric.Icon;
+        const bgShade = idx % 2 === 0 ? "bg-gray-100" : "bg-gray-200";
 
         return (
           <motion.div
             key={metric.id}
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }}
+            transition={{ delay: idx * 0.1, duration: 0.5 }}
           >
-            <Card className={`${bgShade} flex flex-col justify-between p-5`} glow={false}>
-              {/* Icon + Name */}
+            <Card className={`${bgShade} p-5`} glow={false}>
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-3">
                   <motion.div
-                    whileHover={{ rotate: 360, transition: { duration: 1 } }}
+                    whileHover={{ rotate: 360 }}
                     className="rounded-lg bg-green-100 p-2 text-green-600"
                   >
                     <Icon size={18} />
@@ -146,8 +130,6 @@ const MetricCard: React.FC = () => {
                   <h3 className="text-gray-800 font-medium">{metric.name}</h3>
                 </div>
               </div>
-
-              {/* Value */}
               <div className="mt-2 flex items-baseline">
                 <GlowingText
                   text={metric.value}

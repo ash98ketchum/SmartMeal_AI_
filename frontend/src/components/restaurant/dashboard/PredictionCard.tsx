@@ -1,3 +1,5 @@
+// frontend/src/components/restaurant/dashboard/PredictionCard.tsx
+
 import React from "react";
 import { motion } from "framer-motion";
 import { Utensils } from "lucide-react";
@@ -5,7 +7,6 @@ import { Utensils } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 
-// ⇢ Export the interface so PredictionsSection can import it:
 export interface Prediction {
   dishName: string;
   imageUrl: string;

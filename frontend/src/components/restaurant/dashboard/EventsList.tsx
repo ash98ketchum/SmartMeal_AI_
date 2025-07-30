@@ -27,8 +27,8 @@ const EventsList: React.FC<EventsListProps> = ({ className = "" }) => {
 
   // 2) Fetch events when component mounts
   useEffect(() => {
-    axios
-      .get<EventItem[]>("/api/events")
+   axios
+  .get<EventItem[]>(`${import.meta.env.VITE_API_URL}/events`)
       .then((res) => {
         setEvents(res.data);
       })

@@ -1,5 +1,3 @@
-// frontend/src/components/restaurant/dashboard/ChartSection.tsx
-
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -33,7 +31,6 @@ const ChartSection: React.FC<{ className?: string }> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper to attach JWT
   const authHeader = () => ({
     headers: {
       Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -46,20 +43,26 @@ const ChartSection: React.FC<{ className?: string }> = ({
       setError(null);
 
       try {
-        // 1) actual series
         const actualRes = await axios.get<
           Pick<SeriesPoint, "date" | "actual" | "actualEarning">[]
-        >(`/api/dataformodel/${viewMode}`, authHeader());
+        >(
+          `${import.meta.env.VITE_API_URL}/dataformodel/${viewMode}`,
+          authHeader()
+        );
 
-        // 2) predicted series + ε
         const predRes = await axios.get<{
           epsilon: number;
-          series: Pick<SeriesPoint, "date" | "predicted" | "predictedEarning">[];
-        }>(`/api/predicted/${viewMode}`, authHeader());
+          series: Pick<
+            SeriesPoint,
+            "date" | "predicted" | "predictedEarning"
+          >[];
+        }>(
+          `${import.meta.env.VITE_API_URL}/predicted/${viewMode}`,
+          authHeader()
+        );
 
         setEpsilon(predRes.data.epsilon);
 
-        // build lookup maps
         const actualMap = Object.fromEntries(
           actualRes.data.map((d) => [
             d.date,
@@ -73,7 +76,6 @@ const ChartSection: React.FC<{ className?: string }> = ({
           ])
         );
 
-        // merge dates
         const allDates = Array.from(
           new Set([
             ...actualRes.data.map((d) => d.date),
@@ -89,10 +91,10 @@ const ChartSection: React.FC<{ className?: string }> = ({
           predictedEarning: predMap[date]?.predictedEarning ?? 0,
         }));
 
-        // 3) overlay today's live servings
         const todayRes = await axios.get<
           { totalPlates: number; totalEarning: number }[]
-        >("/api/servings", authHeader());
+        >(`${import.meta.env.VITE_API_URL}/servings`, authHeader());
+
         const today = new Date().toISOString().split("T")[0];
         const sumServings = todayRes.data.reduce(
           (sum, s) => sum + (s.totalPlates || 0),
@@ -158,9 +160,7 @@ const ChartSection: React.FC<{ className?: string }> = ({
   }
 
   if (error) {
-    return (
-      <div className="py-8 text-center text-red-500">{error}</div>
-    );
+    return <div className="py-8 text-center text-red-500">{error}</div>;
   }
 
   return (
@@ -177,9 +177,7 @@ const ChartSection: React.FC<{ className?: string }> = ({
               Servings & Earnings: Actual vs Predicted
             </h2>
             {epsilon !== null && (
-              <p className="text-sm text-gray-500">
-                ε = {epsilon.toFixed(2)}
-              </p>
+              <p className="text-sm text-gray-500">ε = {epsilon.toFixed(2)}</p>
             )}
           </div>
           <div className="space-x-2">
@@ -207,17 +205,8 @@ const ChartSection: React.FC<{ className?: string }> = ({
               <YAxis stroke="#D1D5DB" tick={{ fill: "#6B7280" }} />
               <Tooltip content={<CustomTooltip />} />
               <Legend formatter={(v) => <span className="text-gray-600">{v}</span>} />
-
-              <Line
-                dataKey="predicted"
-                name="Predicted Servings"
-                stroke="#4ADE80"
-              />
-              <Line
-                dataKey="actual"
-                name="Actual Servings"
-                stroke="#16A34A"
-              />
+              <Line dataKey="predicted" name="Predicted Servings" stroke="#4ADE80" />
+              <Line dataKey="actual" name="Actual Servings" stroke="#16A34A" />
               <Line
                 dataKey="predictedEarning"
                 name="Predicted Earning"
