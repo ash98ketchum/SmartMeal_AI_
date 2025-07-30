@@ -16,8 +16,9 @@ const SigninRestaurant: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
       const response = await axios.post(
-        'http://localhost:4000/api/v1/auth/login',
+        `${API_URL}/auth/login`,
         { email, password }
       );
       localStorage.setItem('token', response.data.token);
